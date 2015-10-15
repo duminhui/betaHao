@@ -6,23 +6,27 @@ import {
 const{
 	MAX_INPUTS := 20
 	MAX_OUTPUTS := 5
+    ENERGY := -70
 }
 
 type Dentrite struct {
-	var preNeurons = map[int]Neuron
+	var preAxon = map[int]Axon
 	weights int
+    time_delay int
+    excited_count int
+    last_excited_time timestamp
 }
 
-type BranchOfAxon struct {
-	//Anox can form Axon Collaterals(branches). Equally, we define these as multipal outputs.
-	var postNeurons = map[int]Neuron //TODO:write add function to roll query
-	Property bool //need to consider more, perhaps we can put it into dentrites weights
+type Axon stuct {
+    excited bool
+    //time_squence []bool
 }
 
 type Neuron struct {
+    ENERGY 
 	excitedTheshold int;
 	intputs [MAX_INPUTS]Dentrite
-	var outputs [MAX_OUTPUTS]BranchOfAxon
+	var outputs [MAX_OUTPUTS]Axon
 }
 
 func createInput(neuron *Neuron) {
