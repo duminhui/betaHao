@@ -7,13 +7,13 @@ const (
 )
 
 type Axon struct {
-	map[int]Neuron
-    delta_p int
+	next map[*int]Neuron
+    delta_p float32
     // time_delay int
     // excited_count int
 }
 
 type Neuron struct {
-	excited_p int
+	excited_p float32
 	outputs [MAX_OUTPUTS]Axon
 }
