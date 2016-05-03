@@ -24,3 +24,8 @@ type Neuron struct {
     transition_p float32
 }
 
+func (neuron *Neuron) Init() {
+    pre_neurons := make([]*Neuron, 10)
+    post_neurons := make([]*Neuron, 10)
+
+}
