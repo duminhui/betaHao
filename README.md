@@ -4,7 +4,9 @@ betaHao is a program to implement a new idea on how the neuron works
 
 ## Dependencies
 
-`go 1.3.3` is the only needed one up to this time.
+`go 1.3.3`
+
+[`assert`](https://github.com/bmizerany/assert) is needed for developing
 
 For Debian User:
 
@@ -13,13 +15,21 @@ $ sudo apt-get install golang
 ```
 > `gccgo` may be also available. I'm not sure.
 
-## Installation
+## Compliling
 
 ```bash 
 $ git clone https://github.com/duminhui/betaHao
 $ cd betaHao/
 $ export GOPATH=`pwd`
 $ go build
+```
+
+For developer
+
+```bash
+$ cd betaHao/
+$ export GOPATH=`pwd`
+$ go get github.com/bmizerany/assert
 ```
 
 ## Usage
