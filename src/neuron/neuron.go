@@ -1,6 +1,6 @@
 package neuron
 import (
-    "fmt"
+    // "fmt"
 )
 
 const (
@@ -28,8 +28,6 @@ type Neuron struct {
 func (nn *Neuron) Init() {
     // nn.pre_neurons = make([]*Neuron, 10)
     // nn.post_neurons = make([]*Neuron, 10)
-    fmt.Print("init\n")
-
 }
 
 func (nn *Neuron) GetEmmissionP() float32 {

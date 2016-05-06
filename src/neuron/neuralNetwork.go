@@ -5,11 +5,13 @@ import (
     "math/rand"
     // "time"
     "math"
+    "github.com/oleiade/lane"
+    "sync"
 )
 
 type NeuralNetwork struct {
 	Neurons      []*Neuron
-    
+    Handling_neurons    []*Neuron    
 }
 
 func (nk *NeuralNetwork) Generate_nodes(num int) {
@@ -17,9 +19,9 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
     // nk.neurons = make([]*Neuron, num)
     for i := 0; i < num; i++ {
         p := &Neuron{Emmission_p:1, Transition_p:0}
-        p.Init()
+        // :p.Init()
         nk.Neurons = append(nk.Neurons, p)
-        fmt.Println(nk.Neurons)
+        // fmt.Println(nk.Neurons)
     }
 }
 
@@ -54,23 +56,26 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
         }
         for v < n && n <= w {
             w = w-n
-            v = w + 1
+            v = v + 1
             if v == w {
                 w = w + 1
             }
         }
-        if v < n {
+        if v < n { 
+            // fmt.Println("V:", v)
+            // fmt.Println("W:", w)
             nk.Add_edge(v, w)
         }
     }
+    fmt.Println("ER graph generated")
 
 }
 
-func (nk *NeuralNetwork) generate_inputs(num int, seed int64) (inputs []*Neuron){
+func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) (inputs []*Neuron){
     r := rand.New(rand.NewSource(seed))
     input_order := make([]int, 0)
     num_of_nodes := len(nk.Neurons)
-    for num_of_nodes < num {
+    for len(input_order) < num {
         input := r.Intn(num_of_nodes)
         exist := false
         for _, v := range input_order {
@@ -85,7 +90,7 @@ func (nk *NeuralNetwork) generate_inputs(num int, seed int64) (inputs []*Neuron)
         }
     }
 
-    inputs = make([] *Neuron, 0)
+    // inputs = make([] *Neuron, 0)
 
     for _, v := range input_order {
         inputs = append(inputs, nk.Neurons[v])
@@ -94,11 +99,11 @@ func (nk *NeuralNetwork) generate_inputs(num int, seed int64) (inputs []*Neuron)
     return
 }
 
-func (nk *NeuralNetwork) generate_outputs(num int, seed int64) (outputs []*Neuron){
+func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) (outputs []*Neuron){
     r := rand.New(rand.NewSource(seed))
     output_order := make([]int, 0)
     num_of_nodes := len(nk.Neurons)
-    for num_of_nodes < num {
+    for len(output_order) < num {
         output := r.Intn(num_of_nodes)
         exist := false
         for _, v := range output_order {
@@ -113,11 +118,13 @@ func (nk *NeuralNetwork) generate_outputs(num int, seed int64) (outputs []*Neuro
         }
     }
 
-    outputs = make([] *Neuron, 0)
+    // outputs = make([] *Neuron, 0)
 
-    for _, v := range output_order {
-        outputs = append(outputs, nk.Neurons[v])
+    for i:=0; i < len(output_order); i++ {
+        outputs = append(outputs, nk.Neurons[i])
     }
 
     return
 }
+
+func (nk *NeuralNetwork) Run() (outputs []*Neuron){
