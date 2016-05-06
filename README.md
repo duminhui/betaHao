@@ -4,7 +4,9 @@ betaHao is a program to implement a new idea on how the neuron works
 
 ## Installation
 
+```bash
 git clone https://github.com/duminhui/betaHao
+```
 
 ## Dependencies & Installation
 
