@@ -14,6 +14,8 @@ type Neuron struct {
     // collect each pointers of the successors(neurons)
 	Post_neurons []*Neuron
 
+    Excited bool
+
 	// emission probabilities, which means whether this neuron 
     //   is actually excited and release its transmitter after 
     //   the pre_synapse satisfy the potential need of exciting

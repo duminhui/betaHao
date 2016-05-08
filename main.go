@@ -11,10 +11,16 @@ func main() {
     // test.Add_edge(0, 1)
     // fmt.Println("neuron pointers", test.Neurons[0].Post_neurons[0].Pre_neurons[0].Emmission_p)
     test.Fast_generate_random_graph(100, 0.3, 99)
-    inputs := test.Generate_inputs(5, 10)
-    outputs := test.Generate_outputs(5, 10)
+    test.Generate_inputs(5, 10)
+    test.Generate_outputs(5, 10)
 
-    fmt.Println("inputs:", inputs)
-    fmt.Println("outputs:", outputs)
+    test.Inputs[0].Excited = true
+    test.Pick_excited_inputs_to_running_queue()
+
+    temp := test.Running_queue.Dequeue()
+
+    fmt.Println("inputs:", test.Inputs)
+    fmt.Println("outputs:", test.Outputs)
+    fmt.Println("temp:", temp)
 
 }

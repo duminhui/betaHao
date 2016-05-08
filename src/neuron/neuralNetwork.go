@@ -6,12 +6,14 @@ import (
     // "time"
     "math"
     "github.com/oleiade/lane"
-    "sync"
+    // "sync"
 )
 
 type NeuralNetwork struct {
 	Neurons      []*Neuron
-    Handling_neurons    []*Neuron    
+    Running_queue *lane.Queue
+    Inputs  []*Neuron
+    Outputs     []*Neuron
 }
 
 func (nk *NeuralNetwork) Generate_nodes(num int) {
@@ -71,7 +73,7 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 
 }
 
-func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) (inputs []*Neuron){
+func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) {
     r := rand.New(rand.NewSource(seed))
     input_order := make([]int, 0)
     num_of_nodes := len(nk.Neurons)
@@ -93,13 +95,13 @@ func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) (inputs []*Neuron)
     // inputs = make([] *Neuron, 0)
 
     for _, v := range input_order {
-        inputs = append(inputs, nk.Neurons[v])
+        nk.Inputs = append(nk.Inputs, nk.Neurons[v])
     }
 
     return
 }
 
-func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) (outputs []*Neuron){
+func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) {
     r := rand.New(rand.NewSource(seed))
     output_order := make([]int, 0)
     num_of_nodes := len(nk.Neurons)
@@ -121,10 +123,33 @@ func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) (outputs []*Neuro
     // outputs = make([] *Neuron, 0)
 
     for i:=0; i < len(output_order); i++ {
-        outputs = append(outputs, nk.Neurons[i])
+        nk.Outputs = append(nk.Outputs, nk.Neurons[i])
     }
 
     return
 }
 
-func (nk *NeuralNetwork) Run() (outputs []*Neuron){
+func (nk *NeuralNetwork) Init() (){ //TODO:obviouslly it doesn't work
+    // instance := NeuralNetwork{}
+    nk.Generate_nodes(100)
+
+    nk.Fast_generate_random_graph(100, 0.3, 99)
+    nk.Generate_inputs(5, 10)
+    nk.Generate_outputs(5, 10)
+    
+}
+
+func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
+    nk.Running_queue = lane.NewQueue()
+    for _, value := range nk.Inputs {
+        if value.Excited == true {
+            nk._queue.Enqueue(value)
+        }
+        fmt.Println("value:", value.Excited)
+    }
+
+}
+
+func (nk *NeuralNetwork) Boot_up() {
+// TODO
+} 
