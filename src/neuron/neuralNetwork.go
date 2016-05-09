@@ -150,6 +150,20 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 
 }
 
-func (nk *NeuralNetwork) Boot_up() {
-// TODO
+func (nk *NeuralNetwork) Boot_up(step int) {
+    // putting nil Neuron pointer at each start of step
+    // when dequeue a nil pointer, the system will judge inputs and outputs
+    nil_p = nil
+    Running_queue.Enqueue(nil_p)
+    for ; step>0; {
+        neu = Running_queue.Dequeue()
+        if (neu == nil) {
+            Running_queue.Dequeue(nil_p)
+            check_outputs()
+            explain_outputs()
+            check_inputs()
+        }
+        else {
+            finish_exciting_transmitting()
+        }
 } 
