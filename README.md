@@ -11,15 +11,27 @@ git clone https://github.com/duminhui/betaHao
 ## Dependencies & Installation
 
 `golang 1.3.3`: golang compilier
-
-> `gccgo` may be also available. I'm not sure.
-
 [`lane`](https://github.com/oleiade/lane): an implementation of queue struct which is used to record dynamic working neurons
+[`Arcade Learning Environment`](https://github.com/mgbellemare/Arcade-Learning-Environment): a platform for simulating AI environment
+[`RL_Glue`](https://github.com/davidljung/rl-glue): an interface for Golang to communicate with Arcade-Learning_Environment
 
 ```bash
 $ sudo apt-get install golang
 $ cd betaHao/ && export GOPATH=`pwd`
 $ go get github.com/oleiade/lane
+$ mkdir temp && cd temp
+$ sudo apt-get install libsdl1.2-dev libsdl-gfx1.2-dev libsdl-image1.2-dev cmake
+$ git clone https://github.com/mgbellemare/Arcade-Learning-Environment
+$ cd Arcade-Learning-Environment/
+$ mkdir build && cd build
+$ cmake -DUSE_SDL=ON -DUSE_RLGLUE=ON -DBUILD_EXAMPLES=ON ..
+$ make -j 4
+$ cd ../..
+$ git clone https://github.com/davidljung/rl-glue
+$ cd rl-glue/
+$ ./configure
+$ make
+$ sudo make install
 ```
 
 ## Compliling
