@@ -150,20 +150,44 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 
 }
 
+func (nk *NeuralNetwork) check_outputs() {
+    excited_outputs := make([] *Neuron, 0)
+    for _, value := range nk.Outputs {
+        if value.Excited == true {
+            excited_outputs = append(excited_outputs, value)
+        }
+        // fmt.Println("value:", value.Excited)
+    }
+
+}
+
+func (nk *NeuralNetwork) explain_outputs() {
+
+}
+
+func (nk *NeuralNetwork) check_inputs() {
+
+}
+
+func (nk *NeuralNetwork) finish_exciting_transmitting() {
+
+}
+
 func (nk *NeuralNetwork) Boot_up(step int) {
     // putting nil Neuron pointer at each start of step
     // when dequeue a nil pointer, the system will judge inputs and outputs
-    nil_p = nil
+    start_frame = "start"
     Running_queue.Enqueue(nil_p)
     for ; step>0; {
         neu = Running_queue.Dequeue()
-        if (neu == nil) {
-            Running_queue.Dequeue(nil_p)
+        if (neu == start_frame) {
+            Running_queue.Enqueue(start_frame)
             check_outputs()
             explain_outputs()
             check_inputs()
         }
-        else {
+        else{
             finish_exciting_transmitting()
         }
-} 
+    } 
+}

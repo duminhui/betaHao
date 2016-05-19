@@ -1,5 +1,6 @@
 package main
 import (
+    "neuron"
     "bufio"
     "strconv"
     "strings"
@@ -15,6 +16,59 @@ type ALE struct {
     reader
     stdin
     stdout
+}
+
+func (ale *ALE) connect_to_the_controller(outputs []*Neuron) {
+    config := map[string]int{
+        "A_NOOP": 0,
+        "A_FIRE": 1,
+        "A_UP": 2,
+        "A_RIGHT": 3,
+        "A_LEFT": 4,
+        "A_DOWN": 5,
+        "A_UP_RIGHT": 6,
+        "A_UP_LEFT": 7,
+        "A_DOWN_RIGHT": 8,
+        "A_DOWN_LEFT": 9,
+        "A_UP_FIRE": 10,
+        "A_RIGHT_FIRE": 11,
+        "A_LEFT_FIRE": 12,
+        "A_DOWN_FIRE": 13,
+        "A_UP_RIGHT_FIRE": 14,
+        "A_LEFT_FIRE": 15,
+        "A_DOWM_RIGHT_FIRE": 16,
+        "A_DOWN_LEFT_FIRE": 17,
+        "B_NOOP": 18,
+        "B_FIRE": 19,
+        "B_UP": 20,
+        "B_RIGHT": 21,
+        "B_LEFT": 22,
+        "B_DOWN": 23,
+        "B_UP_RIGHT": 24,
+        "B_UP_LEFT": 25,
+        "B_DOWN_RIGHT": 26,
+        "B_DOWN_LEFT": 27,
+        "B_UP_FIRE": 28,
+        "B_RIGHT_FIRE": 29,
+        "B_LEFT_FIRE": 30,
+        "B_DOWN_FIRE": 31,
+        "B_UP_RIGHT_FIRE": 32,
+        "B_LEFT_FIRE": 33,
+        "B_DOWM_RIGHT_FIRE": 34,
+        "B_DOWN_LEFT_FIRE": 35,
+        "RESET": 40,
+        "SAVE_STATE": 43,
+        "LOADE_STATE": 44,
+        "SYSTEM_RESET": 45,}
+
+    avaliable_controller := []string{
+        "A_NOOP",
+        "A_FIRE",
+        "A_RIGHT",
+        "A_LEFT",
+        "SYSTEM_RESET"}
+
+    output_to_controller :=
 }
 
 func (ale *ALE) Init() {
@@ -79,3 +133,5 @@ func (ale *ALE) read_screen_state() (screen_list []int64, is_terminated int64, i
 
     return
 }
+
+func (ale *ALE) write_action(
