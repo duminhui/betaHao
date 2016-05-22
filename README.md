@@ -13,8 +13,7 @@ git clone https://github.com/duminhui/betaHao
 `golang 1.3.3`: golang compilier  
 [`lane`](https://github.com/oleiade/lane): an implementation of queue struct which is used to record dynamic working neurons  
 [`Arcade Learning Environment(ALE)`](https://github.com/mgbellemare/Arcade-Learning-Environment): a platform for simulating AI environment  
-[`RL_Glue`](https://github.com/davidljung/rl-glue): an interface for Golang to communicate with Arcade-Learning_Environment  
-[`breakout`](https://atariage.com/2600/roms/Breakout.zip): a game ROM running on Atari 2600, for more other game available on ALE, please visit [AtariAge](https://atariage.com/system_items.html?SystemID=2600&ItemTypeID=ROM  
+[`breakout`](https://atariage.com/2600/roms/Breakout.zip): a game ROM running on Atari 2600, for more other game available on ALE, please visit [AtariAge](https://atariage.com/system_items.html?SystemID=2600&ItemTypeID=ROM)
 
 
 ```bash
