@@ -1,4 +1,4 @@
-package main
+package ALE
 import (
     "neuron"
     "bufio"
@@ -6,6 +6,8 @@ import (
     "strings"
     "fmt"
     "os/exec"
+    "math/rand"
+    "time"
 )
 
 type ALE struct {
@@ -13,6 +15,7 @@ type ALE struct {
     height int64
     screen_list
     extern_command
+    Output_to_controller
     reader
     stdin
     stdout
@@ -68,7 +71,10 @@ func (ale *ALE) connect_to_the_controller(outputs []*Neuron) {
         "A_LEFT",
         "SYSTEM_RESET"}
 
-    output_to_controller :=
+    ale.Output_to_controller = make(map[*Neuron]int, len(avlaliabe_controller))
+    for i := 0; i <len(output_to_controller); i++ {
+        ale.Output_to_controller[outputs[i]] = config[avaliable_controller[i]]
+    }
 }
 
 func (ale *ALE) Init() {
@@ -134,4 +140,11 @@ func (ale *ALE) read_screen_state() (screen_list []int64, is_terminated int64, i
     return
 }
 
-func (ale *ALE) write_action(
+func (ale *ALE) write_action(excited_outputs_list []*Neuron) {
+    num := len(excited_outputs_list)    
+    rand.Seed(int64(time.Now().Nanosecond()))
+    i := rand.Intn(num)
+    result := ale.Output_to_controller[i] + ",18"
+
+    _, err = stdin.Write([]byte(result))
+}

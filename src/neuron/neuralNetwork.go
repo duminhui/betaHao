@@ -3,6 +3,7 @@ package neuron
 import (
     "fmt"
     "math/rand"
+    "ALE"
     // "time"
     "math"
     "github.com/oleiade/lane"
@@ -12,6 +13,8 @@ import (
 type NeuralNetwork struct {
 	Neurons      []*Neuron
     Running_queue *lane.Queue
+    start_frame string
+    ale ALE
     Inputs  []*Neuron
     Outputs     []*Neuron
 }
@@ -137,13 +140,16 @@ func (nk *NeuralNetwork) Init() (){ //TODO:obviouslly it doesn't work
     nk.Generate_inputs(5, 10)
     nk.Generate_outputs(5, 10)
     
+    ale.connect_to_the_controller(nk.Outputs)
+    ale.Init()
+    
 }
 
 func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
     nk.Running_queue = lane.NewQueue()
     for _, value := range nk.Inputs {
         if value.Excited == true {
-            nk._queue.Enqueue(value)
+            nk.Running_queue.Enqueue(value)
         }
         fmt.Println("value:", value.Excited)
     }
@@ -176,18 +182,17 @@ func (nk *NeuralNetwork) finish_exciting_transmitting() {
 func (nk *NeuralNetwork) Boot_up(step int) {
     // putting nil Neuron pointer at each start of step
     // when dequeue a nil pointer, the system will judge inputs and outputs
-    start_frame = "start"
-    Running_queue.Enqueue(nil_p)
-    for ; step>0; {
-        neu = Running_queue.Dequeue()
-        if (neu == start_frame) {
-            Running_queue.Enqueue(start_frame)
-            check_outputs()
-            explain_outputs()
-            check_inputs()
-        }
-        else{
-            finish_exciting_transmitting()
+    nk.start_frame = "start"
+    nk.Running_queue.Enqueue(nk.start_frame)
+    for ; step>0; step-- {
+        neu := nk.Running_queue.Dequeue()
+        if (neu == nk.start_frame) {
+            nk.Running_queue.Enqueue(nk.start_frame)
+            nk.check_outputs()
+            nk.explain_outputs()
+            nk.check_inputs()
+        } else {
+            nk.finish_exciting_transmitting()
         }
     } 
 }
