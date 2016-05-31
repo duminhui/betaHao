@@ -117,7 +117,7 @@ func (ale *ALE) Final() {
     ale.stdout.Close()
 }
 
-func (ale *ALE) read_screen_state() (screen_list []int64, is_terminated int64, is_scored int64) {
+func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_scored int64) {
     line, _, err  = ale.ReadLine()
     temp = strings.Split(string(line), ":")
 
@@ -140,7 +140,7 @@ func (ale *ALE) read_screen_state() (screen_list []int64, is_terminated int64, i
     return
 }
 
-func (ale *ALE) write_action(excited_outputs_list []*Neuron) {
+func (ale *ALE) Write_action(excited_outputs_list []*Neuron) {
     num := len(excited_outputs_list)    
     rand.Seed(int64(time.Now().Nanosecond()))
     i := rand.Intn(num)

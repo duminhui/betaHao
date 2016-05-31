@@ -3,7 +3,6 @@ package neuron
 import (
     "fmt"
     "math/rand"
-    "ALE"
     // "time"
     "math"
     "github.com/oleiade/lane"
@@ -17,6 +16,13 @@ type NeuralNetwork struct {
     ale ALE
     Inputs  []*Neuron
     Outputs     []*Neuron
+}
+
+type Environmenter interface{
+    Init()
+    Read_state()
+    Write_action()
+    Final()
 }
 
 func (nk *NeuralNetwork) Generate_nodes(num int) {
