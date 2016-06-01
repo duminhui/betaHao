@@ -19,7 +19,7 @@ type NeuralNetwork struct {
 }
 
 type Environmenter interface{
-    Init()
+    Init() (num_of_controller int64, num_of_state int64)
     Read_state()
     Write_action()
     Final()
@@ -138,16 +138,18 @@ func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) {
     return
 }
 
-func (nk *NeuralNetwork) Init() (){ //TODO:obviouslly it doesn't work
+func (nk *NeuralNetwork) Init(env Environmenter) (){ 
     // instance := NeuralNetwork{}
     nk.Generate_nodes(100)
 
     nk.Fast_generate_random_graph(100, 0.3, 99)
-    nk.Generate_inputs(5, 10)
-    nk.Generate_outputs(5, 10)
-    
-    ale.connect_to_the_controller(nk.Outputs)
-    ale.Init()
+
+    num_of_outputs, num_of_inputs = env.Init()
+
+    //TODO: change nk.Inputs &nk.Outputs's definition to map
+
+    nk.Generate_inputs(num_of_inputs, 10)// num_of_inputs, seed
+    nk.Generate_outputs(num_of_outputs, 10)
     
 }
 
