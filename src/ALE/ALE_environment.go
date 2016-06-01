@@ -21,7 +21,7 @@ type ALE struct {
     stdout
 }
 
-func (ale *ALE) connect_to_the_controller(outputs []*Neuron) {
+func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
     config := map[string]int{
         "A_NOOP": 0,
         "A_FIRE": 1,
@@ -64,20 +64,24 @@ func (ale *ALE) connect_to_the_controller(outputs []*Neuron) {
         "LOADE_STATE": 44,
         "SYSTEM_RESET": 45,}
 
-    avaliable_controller := []string{
+    ale.avaliable_controller = []string{
         "A_NOOP",
         "A_FIRE",
         "A_RIGHT",
         "A_LEFT",
         "SYSTEM_RESET"}
 
-    ale.Output_to_controller = make(map[*Neuron]int, len(avlaliabe_controller))
+    // ale.Output_to_controller = make(map[*Neuron]int, len(avlaliabe_controller))
     for i := 0; i <len(output_to_controller); i++ {
         ale.Output_to_controller[outputs[i]] = config[avaliable_controller[i]]
     }
+
+    num_of_controller = len(ale.avaliable_controller)
+
+    return
 }
 
-func (ale *ALE) Init() {
+func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
     ale_exec_file := []string{ "./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin" }
     ale.extern_command = exec.Command(ale_exec_file)
 
@@ -108,9 +112,17 @@ func (ale *ALE) Init() {
 
     _, err = stdin.Write([]byte("1,0,0,1\n"))
 
-    ale.screen_list = make([]int64, ale.height*width)
+    ale.screen_list = make([]int64, ale.height*ale.width)
+
+    num_of_controller = ale.connect_to_the_controller()
+    num_of_state = 8*ale.height*ale.width + 2 //all the screen pixels, 8bits each pixels,
+    // plus is_terminated & is_scored
+
+    return
 
 }
+
+func get_num_of_controller_points()
 
 func (ale *ALE) Final() {
     ale.stdin.Close()
