@@ -13,9 +13,9 @@ type NeuralNetwork struct {
 	Neurons      []*Neuron
     Running_queue *lane.Queue
     start_frame string
-    ale ALE
-    Inputs  []*Neuron
-    Outputs     []*Neuron
+
+    Inputs  map[int64]*Neuron
+    Outputs     map[*Neuron]int64
 }
 
 type Environmenter interface{
@@ -82,12 +82,12 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 
 }
 
-func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) {
+func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
     r := rand.New(rand.NewSource(seed))
-    input_order := make([]int, 0)
-    num_of_nodes := len(nk.Neurons)
-    for len(input_order) < num {
-        input := r.Intn(num_of_nodes)
+    input_order := make([]int64, num)
+    num_of_nodes := int64(len(nk.Neurons))
+    for int64(len(input_order)) < num {
+        input := r.Int63n(num_of_nodes)
         exist := false
         for _, v := range input_order {
             if v==input {
@@ -100,22 +100,25 @@ func (nk *NeuralNetwork) Generate_inputs(num int, seed int64) {
             input_order = append(input_order, input)
         }
     }
+    fmt.Printf("input_order: %v",input_order)
 
     // inputs = make([] *Neuron, 0)
 
-    for _, v := range input_order {
-        nk.Inputs = append(nk.Inputs, nk.Neurons[v])
+    for i, _ := range input_order {
+        // nk.Inputs = append(nk.Inputs, nk.Neurons[v])
+        fmt.Printf("inpurt_order: %v, %T\n", i, i)
+        // nk.Inputs[int64(i)] = nk.Neurons[v]
     }
 
     return
 }
 
-func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) {
+func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
     r := rand.New(rand.NewSource(seed))
-    output_order := make([]int, 0)
-    num_of_nodes := len(nk.Neurons)
-    for len(output_order) < num {
-        output := r.Intn(num_of_nodes)
+    output_order := make([]int64, num)
+    num_of_nodes := int64(len(nk.Neurons))
+    for int64(len(output_order)) < num {
+        output := r.Int63n(num_of_nodes)
         exist := false
         for _, v := range output_order {
             if v==output {
@@ -129,10 +132,11 @@ func (nk *NeuralNetwork) Generate_outputs(num int, seed int64) {
         }
     }
 
-    // outputs = make([] *Neuron, 0)
+    nk.Outputs = make(map[*Neuron]int64, num)
 
     for i:=0; i < len(output_order); i++ {
-        nk.Outputs = append(nk.Outputs, nk.Neurons[i])
+        // nk.Outputs = append(nk.Outputs, nk.Neurons[i])
+        nk.Outputs[nk.Neurons[i]] = int64(i)
     }
 
     return
@@ -144,7 +148,7 @@ func (nk *NeuralNetwork) Init(env Environmenter) (){
 
     nk.Fast_generate_random_graph(100, 0.3, 99)
 
-    num_of_outputs, num_of_inputs = env.Init()
+    num_of_outputs, num_of_inputs := env.Init()
 
     //TODO: change nk.Inputs &nk.Outputs's definition to map
 
@@ -166,9 +170,9 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 
 func (nk *NeuralNetwork) check_outputs() {
     excited_outputs := make([] *Neuron, 0)
-    for _, value := range nk.Outputs {
-        if value.Excited == true {
-            excited_outputs = append(excited_outputs, value)
+    for key, _ := range nk.Outputs {
+        if key.Excited == true {
+            excited_outputs = append(excited_outputs, key)
         }
         // fmt.Println("value:", value.Excited)
     }

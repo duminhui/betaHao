@@ -1,24 +1,27 @@
 package ALE
 import (
-    "neuron"
     "bufio"
     "strconv"
     "strings"
     "fmt"
     "os/exec"
+    "io"
     "math/rand"
     "time"
 )
 
 type ALE struct {
-    weight int64
     height int64
-    screen_list
-    extern_command
-    Output_to_controller
-    reader
-    stdin
-    stdout
+    width int64
+
+    screen_list []int64
+    avaliable_controller []string
+
+    extern_command *exec.Cmd
+    stdin  io.WriteCloser
+    stdout  io.ReadCloser
+    reader *bufio.Reader
+    err error
 }
 
 func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
@@ -38,7 +41,7 @@ func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
         "A_LEFT_FIRE": 12,
         "A_DOWN_FIRE": 13,
         "A_UP_RIGHT_FIRE": 14,
-        "A_LEFT_FIRE": 15,
+        "A_UP_LEFT_FIRE": 15,
         "A_DOWM_RIGHT_FIRE": 16,
         "A_DOWN_LEFT_FIRE": 17,
         "B_NOOP": 18,
@@ -56,7 +59,7 @@ func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
         "B_LEFT_FIRE": 30,
         "B_DOWN_FIRE": 31,
         "B_UP_RIGHT_FIRE": 32,
-        "B_LEFT_FIRE": 33,
+        "B_UP_LEFT_FIRE": 33,
         "B_DOWM_RIGHT_FIRE": 34,
         "B_DOWN_LEFT_FIRE": 35,
         "RESET": 40,
@@ -70,35 +73,35 @@ func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
         "A_RIGHT",
         "A_LEFT",
         "SYSTEM_RESET"}
-
-    // ale.Output_to_controller = make(map[*Neuron]int, len(avlaliabe_controller))
+/*
+    ale.Output_to_controller = make(map[*Neuron]int, len(avlaliabe_controller))
     for i := 0; i <len(output_to_controller); i++ {
         ale.Output_to_controller[outputs[i]] = config[avaliable_controller[i]]
     }
+    */
 
-    num_of_controller = len(ale.avaliable_controller)
+    num_of_controller = int64(len(ale.avaliable_controller))
 
     return
 }
 
 func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
-    ale_exec_file := []string{ "./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin" }
-    ale.extern_command = exec.Command(ale_exec_file)
+    ale.extern_command = exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
 
-    ale.stdin, err = extern_command.StdinPipe()
-    if err != nil {
-        fmt.Println(err)
+    ale.stdin, ale.err = ale.extern_command.StdinPipe()
+    if ale.err != nil {
+        fmt.Println(ale.err)
     }
 
-    ale.stdout, err = extern_command.StdoutPipe()
-    if err != nil {
-        fmt.Println(err)
+    ale.stdout, ale.err = ale.extern_command.StdoutPipe()
+    if ale.err != nil {
+        fmt.Println(ale.err)
     }
 
-    ale.reader = bufio.NewReader(stdout)
+    ale.reader = bufio.NewReader(ale.stdout)
 
-    ale.exetern_command.Start()
-    ale.pull_command.Wait()
+    ale.extern_command.Start()
+    ale.extern_command.Wait()
 
     line, _, err := ale.reader.ReadLine()
 
@@ -110,7 +113,7 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
     ale.height, _ = strconv.ParseInt(temp[0], 10, 64)
     ale.width, _ = strconv.ParseInt(temp[1], 10, 64)
 
-    _, err = stdin.Write([]byte("1,0,0,1\n"))
+    _, err = ale.stdin.Write([]byte("1,0,0,1\n"))
 
     ale.screen_list = make([]int64, ale.height*ale.width)
 
@@ -122,7 +125,9 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 
 }
 
-func get_num_of_controller_points()
+func get_num_of_controller_points() {
+
+}
 
 func (ale *ALE) Final() {
     ale.stdin.Close()
@@ -130,8 +135,8 @@ func (ale *ALE) Final() {
 }
 
 func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_scored int64) {
-    line, _, err  = ale.ReadLine()
-    temp = strings.Split(string(line), ":")
+    line, _, _  := ale.reader.ReadLine()
+    temp := strings.Split(string(line), ":")
 
     ptr := int64(0)
     lenth := len(temp[0])
@@ -145,18 +150,21 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
         }
     }
 
-    episode_string := srings.Split(string(temp[1]), ",")
-    is_terminated, _ := strconv.ParseInt(episode_string[0], 10, 64)
-    is_scored, _ := strconv.ParseInt(episode_string[1], 10, 64)
+    episode_string := strings.Split(string(temp[1]), ",")
+    is_terminated, _ = strconv.ParseInt(episode_string[0], 10, 64)
+    is_scored, _ = strconv.ParseInt(episode_string[1], 10, 64)
 
     return
 }
 
-func (ale *ALE) Write_action(excited_outputs_list []*Neuron) {
+func (ale *ALE) Write_action(excited_outputs_list []bool) {
     num := len(excited_outputs_list)    
     rand.Seed(int64(time.Now().Nanosecond()))
     i := rand.Intn(num)
-    result := ale.Output_to_controller[i] + ",18"
 
-    _, err = stdin.Write([]byte(result))
+    fmt.Printf("write_action: %v\n", i)
+    //TODO:find real result
+    // result := ale.Output_to_controller[i] + ",18"
+
+    // _, err := ale.stdin.Write([]byte(result))
 }
