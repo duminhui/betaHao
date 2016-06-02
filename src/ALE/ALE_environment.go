@@ -16,6 +16,7 @@ type ALE struct {
 
     screen_list []int64
     avaliable_controller []string
+    config map[string]int64
 
     extern_command *exec.Cmd
     stdin  io.WriteCloser
@@ -25,7 +26,7 @@ type ALE struct {
 }
 
 func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
-    config := map[string]int{
+    ale.config = map[string]int64 {
         "A_NOOP": 0,
         "A_FIRE": 1,
         "A_UP": 2,
@@ -164,7 +165,10 @@ func (ale *ALE) Write_action(excited_outputs_list []bool) {
 
     fmt.Printf("write_action: %v\n", i)
     //TODO:find real result
-    // result := ale.Output_to_controller[i] + ",18"
+     result := string(ale.config[ale.avaliable_controller[i]]) + ",18"
 
-    // _, err := ale.stdin.Write([]byte(result))
+     _, err := ale.stdin.Write([]byte(result))
+    if err != nil {
+        fmt.Println(err)
+    }
 }
