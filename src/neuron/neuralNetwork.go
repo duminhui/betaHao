@@ -20,8 +20,8 @@ type NeuralNetwork struct {
 
 type Environmenter interface{
     Init() (num_of_controller int64, num_of_state int64)
-    Read_state()
-    Write_action()
+    Read_state() (screen_list []int64, is_terminated int64, is_scored int64)
+    Write_action(excited_outputs_list []bool)
     Final()
 }
 

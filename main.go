@@ -8,8 +8,8 @@ import(
 
 func main() {
 
-    // ale := ALE{}
-    // _,_ := ale.Init()
+    ale := ALE.ALE{}
+    controller, state := ale.Init()
 
     test := neuron.NeuralNetwork{}
     test.Generate_nodes(100)
@@ -17,7 +17,7 @@ func main() {
     // fmt.Println("neuron pointers", test.Neurons[0].Post_neurons[0].Pre_neurons[0].Emmission_p)
     test.Fast_generate_random_graph(10000, 0.3, 99)
 
-    test.Init(ALE)
+    test.Init(&ale)
     // test.Generate_inputs(5, 10)
     // test.Generate_outputs(5, 10)
 
@@ -27,6 +27,7 @@ func main() {
     // temp := test.Running_queue.Dequeue()
 
     fmt.Println("inputs:", test.Inputs)
+    fmt.Println("controller & state:", controller, state)
     fmt.Println("outputs:", test.Outputs)
     // fmt.Println("temp:", temp)
 
