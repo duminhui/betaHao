@@ -88,6 +88,11 @@ func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
 
 func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
     ale.extern_command = exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
+    // extern_command := exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
+    // extern_command := exec.Command("ls")
+    // out, _ := extern_command.CombinedOutput()
+
+    // fmt.Println(string(out))
 
     ale.stdin, ale.err = ale.extern_command.StdinPipe()
     if ale.err != nil {
@@ -96,25 +101,34 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 
     ale.stdout, ale.err = ale.extern_command.StdoutPipe()
     if ale.err != nil {
-        fmt.Println(ale.err)
+        fmt.Println("stdout: ", ale.err)
     }
+        fmt.Println("stdin: ", ale.stdin)
+        fmt.Println("stdout: ", ale.stdout)
 
     ale.reader = bufio.NewReader(ale.stdout)
 
     ale.extern_command.Start()
-    ale.extern_command.Wait()
+    // _ = "breakpoint"
 
     line, _, err := ale.reader.ReadLine()
+
 
     if err != nil {
         fmt.Println(err)
     }
 
     temp := strings.Split(string(line), "-")
+    // fmt.Println("line:", line)
+
     ale.height, _ = strconv.ParseInt(temp[0], 10, 64)
     ale.width, _ = strconv.ParseInt(temp[1], 10, 64)
 
+    _ = "breakpoint"
+
     _, err = ale.stdin.Write([]byte("1,0,0,1\n"))
+
+    _ = "breakpoint"
 
     ale.screen_list = make([]int64, ale.height*ale.width)
 
@@ -131,6 +145,7 @@ func get_num_of_controller_points() {
 }
 
 func (ale *ALE) Final() {
+    ale.extern_command.Wait()
     ale.stdin.Close()
     ale.stdout.Close()
 }

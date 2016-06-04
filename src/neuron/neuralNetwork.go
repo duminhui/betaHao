@@ -66,15 +66,16 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
             w = w + 1
         }
         for v < n && n <= w {
-            w = w-n
+            w = w - n
             v = v + 1
             if v == w {
                 w = w + 1
             }
         }
         if v < n { 
-            // fmt.Println("V:", v)
+            // fmt.Println("v: %v, w: %v ", v, w)
             // fmt.Println("W:", w)
+            // _ = "breakpoint"
             nk.Add_edge(v, w)
         }
     }
@@ -100,15 +101,16 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
             input_order = append(input_order, input)
         }
     }
-    fmt.Printf("input_order: %v",input_order)
+    fmt.Printf("len of input_order: %v",len(input_order))
 
     // inputs = make([] *Neuron, 0)
-
+/*
     for i, _ := range input_order {
         // nk.Inputs = append(nk.Inputs, nk.Neurons[v])
         fmt.Printf("inpurt_order: %v, %T\n", i, i)
         // nk.Inputs[int64(i)] = nk.Neurons[v]
     }
+    */
 
     return
 }
@@ -144,16 +146,14 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 
 func (nk *NeuralNetwork) Init(env Environmenter) (){ 
     // instance := NeuralNetwork{}
-    nk.Generate_nodes(100)
+    nk.Generate_nodes(1000)
 
-    nk.Fast_generate_random_graph(100, 0.3, 99)
+    nk.Fast_generate_random_graph(1000, 0.3, 99)
 
     num_of_outputs, num_of_inputs := env.Init()
 
-    //TODO: change nk.Inputs &nk.Outputs's definition to map
-
     nk.Generate_inputs(num_of_inputs, 10)// num_of_inputs, seed
-    nk.Generate_outputs(num_of_outputs, 10)
+    nk.Generate_outputs(num_of_outputs, 100)
     
 }
 
