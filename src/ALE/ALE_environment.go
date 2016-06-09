@@ -16,6 +16,8 @@ type ALE struct {
 	height int64
 	width  int64
 
+	mask_radius int64
+
 	screen_list          []int64
 	binarized_screen     []bool
 	avaliable_controller []string
@@ -152,7 +154,19 @@ func (ale *ALE) Final() {
 	ale.stdout.Close()
 }
 
-func (ale *ALE) binarize(screen_list []int64) {
+func (ale *ALE) mask(image []int64, x int64, y int64, radius int64) {
+
+	ale.width, ale.height
+
+	x_0, y_0 = x-radius, y-radius
+	col = 2 * radius
+	row = 2 * radius
+
+	image = make([]int64, radius*radius)
+
+}
+
+func (ale *ALE) binarize(screen_list []int64) (binarized_screen []bool) {
 	lenth := ale.height * ale.width
 	ale.binarized_screen = make([]bool, lenth)
 
@@ -164,6 +178,8 @@ func (ale *ALE) binarize(screen_list []int64) {
 		}
 	}
 	_ = "breakpoint"
+	binarized_screen = ale.binarized_screen
+	return
 }
 
 func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_scored int64) {
@@ -182,9 +198,10 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
 		}
 	}
 
-	ale.binarize(ale.screen_list)
+	screen_list = ale.binarize(ale.screen_list)
 
 	episode_string := strings.Split(string(temp[1]), ",")
+	// screen_list = ale.screen_list
 	is_terminated, _ = strconv.ParseInt(episode_string[0], 10, 64)
 	is_scored, _ = strconv.ParseInt(episode_string[1], 10, 64)
 

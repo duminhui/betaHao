@@ -14,8 +14,10 @@ type NeuralNetwork struct {
 	Running_queue *lane.Queue
 	start_frame   string
 
-	Inputs  map[int64]*Neuron
-	Outputs map[*Neuron]int64
+	Inputs            map[int64]*Neuron
+	Outputs           map[*Neuron]int64
+	num_of_controller int64
+	num_of_state      int64
 }
 
 type Environmenter interface {
@@ -210,5 +212,9 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 }
 
 func (nk *NeuralNetwork) Read_state(env Environmenter) {
-	env.Read_state()
+	screen_inputs, is_terminated, is_scored := env.Read_state()
+	_ = "breakpoint"
+	fmt.Println(screen_inputs)
+	fmt.Println(is_terminated)
+	fmt.Println(is_scored)
 }
