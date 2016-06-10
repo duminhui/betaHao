@@ -144,26 +144,42 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 
 }
 
-func get_num_of_controller_points() {
-
-}
-
 func (ale *ALE) Final() {
 	ale.extern_command.Wait()
 	ale.stdin.Close()
 	ale.stdout.Close()
 }
 
-func (ale *ALE) mask(image []int64, x int64, y int64, radius int64) {
+func submatrix(origin []int64, col, row, i, j, p, q int64) (result []int64) {
+	result = make([]int64, p*q)
+	k := 0
+	for m := int64(0); m < p; m++ {
+		for n := int64(0); n < q; n++ {
+			if (i+m) < 0 || (i+m) >= row || (j+n) < 0 || (j+n) >= col {
+				result[k] = 0
+			} else {
+				fmt.Println(k, (i+m)*col+j+n)
+				result[k] = origin[(i+m)*col+j+n]
+			}
+			k++
+		}
+	}
+	return
+}
 
-	ale.width, ale.height
+func (ale *ALE) mask(image []int64, x int64, y int64, radius int64) (subimage []int64) {
 
-	x_0, y_0 = x-radius, y-radius
-	col = 2 * radius
-	row = 2 * radius
+	// ale.width, ale.height
 
-	image = make([]int64, radius*radius)
+	x_0, y_0 := x-radius, y-radius
+	col := 2 * radius
+	row := 2 * radius
 
+	subimage = submatrix(image, ale.width, ale.height, x_0, y_0, col, row)
+
+	_ = "breakpoint"
+
+	return
 }
 
 func (ale *ALE) binarize(screen_list []int64) (binarized_screen []bool) {
@@ -177,7 +193,6 @@ func (ale *ALE) binarize(screen_list []int64) (binarized_screen []bool) {
 			ale.binarized_screen[i] = false
 		}
 	}
-	_ = "breakpoint"
 	binarized_screen = ale.binarized_screen
 	return
 }
@@ -198,7 +213,8 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
 		}
 	}
 
-	screen_list = ale.binarize(ale.screen_list)
+	// screen_list = ale.binarize(ale.screen_list)
+	screen_list = ale.mask(ale.screen_list, 2, 2, 10)
 
 	episode_string := strings.Split(string(temp[1]), ",")
 	// screen_list = ale.screen_list
