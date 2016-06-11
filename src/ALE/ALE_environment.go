@@ -12,11 +12,17 @@ import (
 	"time"
 )
 
+type Mask struct {
+	x      int64
+	y      int64
+	radius int64
+}
+
 type ALE struct {
 	height int64
 	width  int64
 
-	mask_radius int64
+	mask Mask
 
 	screen_list          []int64
 	binarized_screen     []bool
@@ -92,6 +98,9 @@ func (ale *ALE) connect_to_the_controller() (num_of_controller int64) {
 }
 
 func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
+	ale.mask.x = 0
+	ale.mask.y = 0
+	ale.mask.radius = 10
 	ale.extern_command = exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
 	// extern_command := exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
 	// extern_command := exec.Command("ls")
@@ -167,9 +176,7 @@ func submatrix(origin []int64, col, row, i, j, p, q int64) (result []int64) {
 	return
 }
 
-func (ale *ALE) mask(image []int64, x int64, y int64, radius int64) (subimage []int64) {
-
-	// ale.width, ale.height
+func (ale *ALE) auxiliary_lens(image []int64, x int64, y int64, radius int64) (subimage []int64) {
 
 	x_0, y_0 := x-radius, y-radius
 	col := 2 * radius
@@ -214,7 +221,7 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
 	}
 
 	// screen_list = ale.binarize(ale.screen_list)
-	screen_list = ale.mask(ale.screen_list, 2, 2, 10)
+	screen_list = ale.auxiliary_lens(ale.screen_list, ale.mask.x, ale.mask.y, ale.mask.radius)
 
 	episode_string := strings.Split(string(temp[1]), ",")
 	// screen_list = ale.screen_list
@@ -224,17 +231,63 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
 	return
 }
 
-func (ale *ALE) Write_action(excited_outputs_list []bool) {
-	num := len(excited_outputs_list)
-	rand.Seed(int64(time.Now().Nanosecond()))
-	i := rand.Intn(num)
+func (ale *ALE) central_mask_point(mask_influences []int64) (is_changed bool) {
+	x_t, y_t := ale.mask.x, ale.mask.y
+	switch {
+	case mask_influences[0] > 0:
+		ale.mask.x += 1
+	case mask_influences[1] > 0:
+		ale.mask.x -= 1
+	case mask_influences[2] > 0:
+		ale.mask.y += 1
+	case mask_influences[3] > 0:
+		ale.mask.y -= 1
+	}
 
-	fmt.Printf("write_action: %v\n", i)
-	//TODO:find real result
-	result := string(ale.config[ale.avaliable_controller[i]]) + ",18"
+	if ale.mask.x < 0 {
+		ale.mask.x = 0
+	} else if ale.mask.x > ale.height {
+		ale.mask.x = ale.height - 1
+	} else if ale.mask.y < 0 {
+		ale.mask.y = 0
+	} else if ale.mask.y > ale.width {
+		ale.mask.y = ale.width - 1
+	}
+
+	_ = "breakpoint"
+
+	if x_t == ale.mask.x && y_t == ale.mask.y {
+		return false
+	} else {
+		return true
+	}
+
+}
+
+func (ale *ALE) write_to_game(game_operater []int64) {
+	num := len(game_operater)
+
+	t := make([]int64, 10)
+	for i := int64(0); i < int64(num); i++ {
+		if game_operater[i] > 0 {
+			t = append(t, i)
+		}
+	}
+
+	n := len(t)
+	j := int64(rand.Intn(n))
+	result := string(ale.config[ale.avaliable_controller[t[j]]]) + ",18"
 
 	_, err := ale.stdin.Write([]byte(result))
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func (ale *ALE) Write_action(game_operater []int64, mask_influences []int64) {
+	rand.Seed(int64(time.Now().Nanosecond()))
+
+	// fmt.Printf("write_action: %v\n", i)
+	//TODO:find real result
+
 }
