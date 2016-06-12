@@ -181,10 +181,6 @@ func (nk *NeuralNetwork) check_outputs() {
 
 }
 
-func (nk *NeuralNetwork) explain_outputs() {
-
-}
-
 func (nk *NeuralNetwork) check_inputs() {
 
 }
@@ -203,10 +199,9 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		if neu == nk.start_frame {
 			nk.Running_queue.Enqueue(nk.start_frame)
 			nk.check_outputs()
-			nk.explain_outputs()
 			nk.check_inputs()
 		} else {
-			nk.finish_exciting_transmitting()
+			nk.finish_exciting_transmitting(neu)
 		}
 	}
 }
