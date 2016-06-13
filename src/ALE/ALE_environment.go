@@ -233,15 +233,17 @@ func (ale *ALE) Read_state() (screen_list []int64, is_terminated int64, is_score
 
 func (ale *ALE) central_mask_point(mask_influences []int64) (is_changed bool) {
 	x_t, y_t := ale.mask.x, ale.mask.y
-	switch {
-	case mask_influences[0] > 0:
-		ale.mask.x += 1
-	case mask_influences[1] > 0:
-		ale.mask.x -= 1
-	case mask_influences[2] > 0:
-		ale.mask.y += 1
-	case mask_influences[3] > 0:
-		ale.mask.y -= 1
+	for _, v := range mask_influences {
+		switch v {
+		case 0:
+			ale.mask.x += 1
+		case 1:
+			ale.mask.x -= 1
+		case 2:
+			ale.mask.y += 1
+		case 3:
+			ale.mask.y -= 1
+		}
 	}
 
 	if ale.mask.x < 0 {
@@ -264,19 +266,10 @@ func (ale *ALE) central_mask_point(mask_influences []int64) (is_changed bool) {
 
 }
 
-func (ale *ALE) write_to_game(game_operater []int64) {
-	num := len(game_operater)
-
-	t := make([]int64, 10)
-	for i := int64(0); i < int64(num); i++ {
-		if game_operater[i] > 0 {
-			t = append(t, i)
-		}
-	}
-
-	n := len(t)
+func (ale *ALE) write_to_game(game_operator []int64) {
+	n := len(game_operator)
 	j := int64(rand.Intn(n))
-	result := string(ale.config[ale.avaliable_controller[t[j]]]) + ",18"
+	result := string(ale.config[ale.avaliable_controller[j]]) + ",18"
 
 	_, err := ale.stdin.Write([]byte(result))
 	if err != nil {
@@ -284,10 +277,15 @@ func (ale *ALE) write_to_game(game_operater []int64) {
 	}
 }
 
-func (ale *ALE) Write_action(game_operater []int64, mask_influences []int64) {
+func (ale *ALE) Write_action(game_operator []int64, mask_influences []int64) {
 	rand.Seed(int64(time.Now().Nanosecond()))
 
-	// fmt.Printf("write_action: %v\n", i)
-	//TODO:find real result
+	if len(game_operator) > 0 {
+		ale.write_to_game(game_operator)
+	}
+
+	if len(mask_influences) > 0 {
+		ale.central_mask_point(mask_influences)
+	}
 
 }

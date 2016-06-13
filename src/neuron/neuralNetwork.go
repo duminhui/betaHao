@@ -4,18 +4,33 @@ import (
 	"fmt"
 	"math/rand"
 	// "time"
+	"ALE"
 	"github.com/oleiade/lane"
-	"math"
+	// "math"
 	// "sync"
 )
+
+type Output struct {
+	game_operatror   []*Neuron //运行态
+	mask_influences  []*Neuron // 运行态
+	mapping_relation map[*Neuron]int64
+}
+
+// TODO: input output类要配一个传输态的类型转换
+
+type Input struct {
+	inputs           []int64 // 运行态
+	mapping_relation map[int64]*Neuron
+}
 
 type NeuralNetwork struct {
 	Neurons       []*Neuron
 	Running_queue *lane.Queue
 	start_frame   string
+	env           Environmenter
 
-	Inputs            map[int64]*Neuron
-	Outputs           map[*Neuron]int64
+	input             Input
+	output            Output
 	num_of_controller int64
 	num_of_state      int64
 }
@@ -146,8 +161,10 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 	return
 }
 
-func (nk *NeuralNetwork) Init(env Environmenter) {
+func (nk *NeuralNetwork) Init() {
 	// instance := NeuralNetwork{}
+	ale := ALE.ALE{}
+	env = &ale
 	nk.Generate_nodes(1000)
 
 	nk.Fast_generate_random_graph(1000, 0.3, 99)
@@ -171,17 +188,31 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 }
 
 func (nk *NeuralNetwork) check_outputs() {
-	excited_outputs := make([]*Neuron, 0)
-	for key, _ := range nk.Outputs {
-		if key.Excited == true {
-			excited_outputs = append(excited_outputs, key)
-		}
-		// fmt.Println("value:", value.Excited)
+	oper := make([]int64, len(nk.output.game_operatror))
+	mask := make([]int64, len(nk.output.mask_influences))
+
+	for _, item := range nk.output.game_operatror {
+		oper = append(oper, nk.output.mapping_relation[item])
 	}
+
+	for _, item := range nk.output.mask_influences {
+		oper = append(oper, nk.output.mapping_relation[item])
+	}
+
+	nk.Write_action(oper, mask)
+
+}
+
+func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 
 }
 
 func (nk *NeuralNetwork) check_inputs() {
+	screen_inputs, is_terminated, is_scored := env.Read_state()
+	_ = "breakpoint"
+	fmt.Println(screen_inputs)
+	fmt.Println(is_terminated)
+	fmt.Println(is_scored)
 
 }
 
@@ -204,12 +235,4 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 			nk.finish_exciting_transmitting(neu)
 		}
 	}
-}
-
-func (nk *NeuralNetwork) Read_state(env Environmenter) {
-	screen_inputs, is_terminated, is_scored := env.Read_state()
-	_ = "breakpoint"
-	fmt.Println(screen_inputs)
-	fmt.Println(is_terminated)
-	fmt.Println(is_scored)
 }
