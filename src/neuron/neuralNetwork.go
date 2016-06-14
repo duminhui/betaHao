@@ -204,19 +204,25 @@ func (nk *NeuralNetwork) check_outputs() {
 }
 
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
-
+	for _, v := range inputs {
+		if v > 0 {
+			nk.Running_queue.Enqueue(nk.input.mapping_relation[v])
+		}
+	}
 }
 
 func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := env.Read_state()
+	merge_inputs := append(screen_inputs, is_terminated, is_scored)
 	_ = "breakpoint"
-	fmt.Println(screen_inputs)
-	fmt.Println(is_terminated)
-	fmt.Println(is_scored)
+	nk.put_inputs_into_queue(merge_inputs)
+	// fmt.Println(screen_inputs)
+	// fmt.Println(is_terminated)
+	// fmt.Println(is_scored)
 
 }
 
-func (nk *NeuralNetwork) finish_exciting_transmitting() {
+func (nk *NeuralNetwork) finish_exciting_transmitting(neu *Neuron) {
 
 }
 
