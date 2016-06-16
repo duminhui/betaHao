@@ -223,6 +223,8 @@ func (nk *NeuralNetwork) check_inputs() {
 }
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu *Neuron) {
+	for _, v := range neu.post_neuron {
+		v
 
 }
 
