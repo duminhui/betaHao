@@ -71,8 +71,22 @@ func (nn *Neuron) merge_probability(trans_p float64) (p float64) {
 	return
 }
 
-func (nn *Neuron) try_enough_energy() {
+func (nn *Neuron) try_enough_energy() bool {
+	if nn.cell.pool < 0.1 {
+		return false
+	} else {
+		return true
+	}
+}
 
+func (nn *Neuron) try_excite() {
+	 r := rand.New(rand.NewSource(16)
+	 p := r.float64()
+	 if (p < nn.cell.excited_p) {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (nn *Neuron) pass_potential() {
@@ -82,6 +96,7 @@ func (nn *Neuron) pass_potential() {
 		// if next neuron need recovered, then this neuron should not trans its excited and its excited_p should decrease
 		this.trans.Decrease()
 	} else {
+
 		if next.in_activing_period() {
 			temp_p = merge_probability()
 			if next.try_enough_energy() {
@@ -109,5 +124,6 @@ func (nn *Neuron) pass_potential() {
 				// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 			}
 		}
+
 	}
 }
