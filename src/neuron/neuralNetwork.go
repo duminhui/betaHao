@@ -6,17 +6,15 @@ import (
 	// "time"
 	"ALE"
 	"github.com/oleiade/lane"
-	// "math"
+	"math"
 	// "sync"
 )
 
 type Output struct {
-	game_operatror   []*Neuron //运行态
+	game_operatror   []*Neuron // 运行态
 	mask_influences  []*Neuron // 运行态
 	mapping_relation map[*Neuron]int64
 }
-
-// TODO: input output类要配一个传输态的类型转换
 
 type Input struct {
 	inputs           []int64 // 运行态
@@ -46,7 +44,7 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// initialize 'num' numbers of neurons in the network
 	// nk.neurons = make([]*Neuron, num)
 	for i := 0; i < num; i++ {
-		p := &Neuron{Emmission_p: 1, Transition_p: 0}
+		p := &Neuron{cell.base_p: 1, trans.p: 0}
 		// :p.Init()
 		nk.Neurons = append(nk.Neurons, p)
 		// fmt.Println(nk.Neurons)
@@ -90,8 +88,6 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 			}
 		}
 		if v < n {
-			// fmt.Println("v: %v, w: %v ", v, w)
-			// fmt.Println("W:", w)
 			// _ = "breakpoint"
 			nk.Add_edge(v, w)
 		}
@@ -151,25 +147,24 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 		}
 	}
 
-	nk.Outputs = make(map[*Neuron]int64, num)
+	nk.output.mapping_relation = make(map[*Neuron]int64, num)
 
 	for i := 0; i < len(output_order); i++ {
 		// nk.Outputs = append(nk.Outputs, nk.Neurons[i])
-		nk.Outputs[nk.Neurons[i]] = int64(i)
+		nk.output.mapping_relation[nk.Neurons[i]] = int64(i)
 	}
 
 	return
 }
 
 func (nk *NeuralNetwork) Init() {
-	// instance := NeuralNetwork{}
 	ale := ALE.ALE{}
-	env = &ale
+	nk.env = &ale
 	nk.Generate_nodes(1000)
 
 	nk.Fast_generate_random_graph(1000, 0.3, 99)
 
-	num_of_outputs, num_of_inputs := env.Init()
+	num_of_outputs, num_of_inputs := nk.env.Init()
 
 	nk.Generate_inputs(num_of_inputs, 10) // num_of_inputs, seed
 	nk.Generate_outputs(num_of_outputs, 100)
@@ -216,15 +211,10 @@ func (nk *NeuralNetwork) check_inputs() {
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
 	_ = "breakpoint"
 	nk.put_inputs_into_queue(merge_inputs)
-	// fmt.Println(screen_inputs)
-	// fmt.Println(is_terminated)
-	// fmt.Println(is_scored)
 
 }
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu *Neuron) {
-	for _, v := range neu.post_neuron {
-		v
 
 }
 

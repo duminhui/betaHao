@@ -20,7 +20,7 @@ func (pl *Cell) Decrease() {
 }
 
 func (pl *Cell) Recover(delta int64) {
-	pl.pool = pl.pool + 0.1*delta
+	pl.pool = pl.pool + 0.1 * float64(delta)
 }
 
 type Transmission struct {
@@ -80,7 +80,7 @@ func (nn *Neuron) try_enough_energy() bool {
 }
 
 func (nn *Neuron) try_excite() {
-	 r := rand.New(rand.NewSource(16)
+	 r := rand.New(rand.NewSource(16))
 	 p := r.float64()
 	 if (p < nn.cell.excited_p) {
 		return true
@@ -88,6 +88,16 @@ func (nn *Neuron) try_excite() {
 		return false
 	}
 }
+
+func (nn *Neuron) change_state() {
+
+}
+
+func (nn *Neuron) try_avergy_pre_neurons() {
+
+}
+
+
 
 func (nn *Neuron) pass_potential() {
 	this := nn
@@ -101,15 +111,15 @@ func (nn *Neuron) pass_potential() {
 			temp_p = merge_probability()
 			if next.try_enough_energy() {
 				if next.try_excite() { // if could be excited,
-					next.cell.pool.Decrease() // decrease next energy
+					next.cell.Decrease()
 					this.trans.Increase()
 					push_next_neuron_into_dequeue()
-					change_next_neuron_state(blocking_state) // let next be into blocking_state
-				} else {
+					next.change_state(blocking) // let next be into blocking_state
+				} else { // want excite, but no engery
 					next.cell.excit_p = temp_p
 					// TODO: should there be a decrease of this.trans
 				}
-			} else { // not enough energy,
+			} else { // not enough energy
 				next.try_avergy_pre_neurons()
 			}
 		} else { // in scilent state
@@ -118,9 +128,9 @@ func (nn *Neuron) pass_potential() {
 				next.cell.pool.Decrease()
 				this.trans.Increase()
 				push_next_neuron_into_dequeue()
-				change_next_neuron_state(blocking_state) // just to mark a timestamp
+				next.change_state(blocking) // just to mark a timestamp
 			} else {
-				change_next_neuron_state(activing_state) // just to mark a timestamp
+				next.change_state(activing) // just to mark a timestamp
 				// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 			}
 		}
