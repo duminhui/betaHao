@@ -10,15 +10,17 @@ import (
 	// "sync"
 )
 
-type Output struct {
-	game_operatror   []*Neuron // 运行态
-	mask_influences  []*Neuron // 运行态
-	mapping_relation map[*Neuron]int64
-}
+var step int64 = 0
 
 type Input struct {
 	inputs           []int64 // 运行态
 	mapping_relation map[int64]*Neuron
+}
+
+type Output struct {
+	game_operatror   []*Neuron // 运行态
+	mask_influences  []*Neuron // 运行态
+	mapping_relation map[*Neuron]int64
 }
 
 type NeuralNetwork struct {
@@ -44,7 +46,8 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// initialize 'num' numbers of neurons in the network
 	// nk.neurons = make([]*Neuron, num)
 	for i := 0; i < num; i++ {
-		p := &Neuron{cell.base_p: 1, trans.p: 0}
+		p := &Neuron{}
+		p.cell.base_p = 1
 		// :p.Init()
 		nk.Neurons = append(nk.Neurons, p)
 		// fmt.Println(nk.Neurons)
@@ -116,14 +119,12 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 	}
 	fmt.Printf("len of input_order: %v", len(input_order))
 
-	// inputs = make([] *Neuron, 0)
-	/*
-	   for i, _ := range input_order {
-	       // nk.Inputs = append(nk.Inputs, nk.Neurons[v])
-	       fmt.Printf("inpurt_order: %v, %T\n", i, i)
-	       // nk.Inputs[int64(i)] = nk.Neurons[v]
-	   }
-	*/
+	nk.input.mapping_relation = make(map[int64]*Neuron, num)
+	for i, v := range input_order {
+		nk.input.mapping_relation[int64(i)] = nk.Neurons[v]
+		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
+		// nk.Inputs[int64(i)] = nk.Neurons[v]
+	}
 
 	return
 }
@@ -149,9 +150,9 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 
 	nk.output.mapping_relation = make(map[*Neuron]int64, num)
 
-	for i := 0; i < len(output_order); i++ {
+	for i, v := range output_order {
 		// nk.Outputs = append(nk.Outputs, nk.Neurons[i])
-		nk.output.mapping_relation[nk.Neurons[i]] = int64(i)
+		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 	}
 
 	return
@@ -173,7 +174,7 @@ func (nk *NeuralNetwork) Init() {
 
 func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 	nk.Running_queue = lane.NewQueue()
-	for _, value := range nk.Inputs {
+	for _, value := range nk.input {
 		if value.Excited == true {
 			nk.Running_queue.Enqueue(value)
 		}
@@ -194,7 +195,7 @@ func (nk *NeuralNetwork) check_outputs() {
 		oper = append(oper, nk.output.mapping_relation[item])
 	}
 
-	nk.Write_action(oper, mask)
+	nk.env.Write_action(oper, mask)
 
 }
 
