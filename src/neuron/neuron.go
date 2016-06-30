@@ -8,6 +8,11 @@ const (
 	MAX_OUTPUTS = 5
 )
 
+const (
+	Quiet int64 = iota // be quiet when initialized
+	Active
+	Blocked
+}
 type Cell struct {
 	base_p               float64
 	excit_p              float64
@@ -42,10 +47,11 @@ type Neuron struct {
 	// collect each pointers of the successors(neurons)
 	Post_neurons []*Neuron
 
-	Excited bool
+	state int64
 	cell    Cell
 	trans   Transmission
 }
+
 
 func (nn *Neuron) caculate_next_neuron_present_status() {
 	det_step := step - nn.cell.last_excit_timestamp
@@ -93,17 +99,16 @@ func (nn *Neuron) try_excite() bool {
 	}
 }
 
-func (nn *Neuron) change_state() {
-
+func (nn *Neuron) change_state(state int64) {
+	nn.state = state
 }
 
 func (nn *Neuron) try_avergy_pre_neurons() {
 
 }
 
-func (nn *Neuron) pass_potential() {
-	this := nn
-	next := caculate_next_neuron_present_status()
+func (this *Neuron) pass_potential(next *Neuron) {
+	next.caculate_present_status()
 	if next.in_blocking_period() {
 		// if next neuron need recovered, then this neuron should not trans its excited and its excited_p should decrease
 		this.trans.Decrease()
@@ -116,7 +121,7 @@ func (nn *Neuron) pass_potential() {
 					next.cell.Decrease()
 					this.trans.Increase()
 					push_next_neuron_into_dequeue()
-					next.change_state(blocking) // let next be into blocking_state
+					next.change_state(Blocked) // let next be into blocking_state
 				} else { // want excite, but no engery
 					next.cell.excit_p = temp_p
 					// TODO: should there be a decrease of this.trans
@@ -130,9 +135,9 @@ func (nn *Neuron) pass_potential() {
 				next.cell.pool.Decrease()
 				this.trans.Increase()
 				push_next_neuron_into_dequeue()
-				next.change_state(blocking) // just to mark a timestamp
+				next.change_state(blocked) // just to mark a timestamp
 			} else {
-				next.change_state(activing) // just to mark a timestamp
+				next.change_state(Active) // just to mark a timestamp
 				// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 			}
 		}
