@@ -1,7 +1,7 @@
 package neuron
 
 import (
-// "fmt"
+	"math/rand"
 )
 
 const (
@@ -9,8 +9,8 @@ const (
 )
 
 type Cell struct {
-	base_p               int64
-	excit_p              int64
+	base_p               float64
+	excit_p              float64
 	pool                 float64
 	last_excit_timestamp int64
 }
@@ -32,6 +32,10 @@ func (ts *Transmission) Decrease() {
 	ts.p -= 0.1
 }
 
+func (ts *Transmission) Increase() {
+	ts.p += 0.1
+}
+
 type Neuron struct {
 	// collect each pointers of the predecessors(neurons)
 	Pre_neurons []*Neuron
@@ -44,12 +48,12 @@ type Neuron struct {
 }
 
 func (nn *Neuron) caculate_next_neuron_present_status() {
-	det_step = step - nn.cell.last_excited_tsp
+	det_step := step - nn.cell.last_excit_timestamp
 	nn.cell.Recover(det_step)
 }
 
 func (nn *Neuron) in_blocking_period() bool {
-	delta_step = step - nn.cell.last_excit_timestamp
+	delta_step := step - nn.cell.last_excit_timestamp
 	if delta_step < 5 {
 		return true
 	} else {
@@ -58,7 +62,7 @@ func (nn *Neuron) in_blocking_period() bool {
 }
 
 func (nn *Neuron) in_activing_period() bool {
-	delta_step = step - nn.trans.last_trans_timestamp
+	delta_step := step - nn.trans.last_trans_timestamp
 	if delta_step < 3 {
 		return true
 	} else {
@@ -79,10 +83,10 @@ func (nn *Neuron) try_enough_energy() bool {
 	}
 }
 
-func (nn *Neuron) try_excite() {
+func (nn *Neuron) try_excite() bool {
 	 r := rand.New(rand.NewSource(16))
-	 p := r.float64()
-	 if (p < nn.cell.excited_p) {
+	 p := r.Float64()
+	 if (p < nn.cell.excit_p) {
 		return true
 	} else {
 		return false
@@ -97,8 +101,6 @@ func (nn *Neuron) try_avergy_pre_neurons() {
 
 }
 
-
-
 func (nn *Neuron) pass_potential() {
 	this := nn
 	next := caculate_next_neuron_present_status()
@@ -108,7 +110,7 @@ func (nn *Neuron) pass_potential() {
 	} else {
 
 		if next.in_activing_period() {
-			temp_p = merge_probability()
+			temp_p := next.merge_probability()
 			if next.try_enough_energy() {
 				if next.try_excite() { // if could be excited,
 					next.cell.Decrease()
@@ -123,7 +125,7 @@ func (nn *Neuron) pass_potential() {
 				next.try_avergy_pre_neurons()
 			}
 		} else { // in scilent state
-			temp_p = next.cell.base_p
+			temp_p := next.cell.base_p
 			if next.try_enough_energy() {
 				next.cell.pool.Decrease()
 				this.trans.Increase()

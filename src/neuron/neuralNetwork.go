@@ -174,7 +174,7 @@ func (nk *NeuralNetwork) Init() {
 
 func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 	nk.Running_queue = lane.NewQueue()
-	for _, value := range nk.input {
+	for _, value := range nk.input.mapping_relation {
 		if value.Excited == true {
 			nk.Running_queue.Enqueue(value)
 		}
@@ -208,14 +208,14 @@ func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 }
 
 func (nk *NeuralNetwork) check_inputs() {
-	screen_inputs, is_terminated, is_scored := env.Read_state()
+	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
 	_ = "breakpoint"
 	nk.put_inputs_into_queue(merge_inputs)
 
 }
 
-func (nk *NeuralNetwork) finish_exciting_transmitting(neu *Neuron) {
+func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 
 }
 
