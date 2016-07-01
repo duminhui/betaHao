@@ -5,8 +5,9 @@ import (
 	"math/rand"
 	// "time"
 	"ALE"
-	"github.com/oleiade/lane"
 	"math"
+
+	"github.com/oleiade/lane"
 	// "sync"
 )
 
@@ -199,6 +200,10 @@ func (nk *NeuralNetwork) check_outputs() {
 
 }
 
+func (nk *NeuralNetwork) push_into_dequeue(nn *Neuron) {
+	nk.Running_queue.Enqueue(nn)
+}
+
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 	for _, v := range inputs {
 		if v > 0 {
@@ -216,6 +221,12 @@ func (nk *NeuralNetwork) check_inputs() {
 }
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
+	for next := range neu.Post_neurons {
+		suc := neu.pass_potential(next)
+		if suc == true {
+			nk.put_inputs_into_queue(next)
+		}
+	}
 
 }
 
