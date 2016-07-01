@@ -12,7 +12,8 @@ const (
 	Quiet int64 = iota // be quiet when initialized
 	Active
 	Blocked
-}
+)
+
 type Cell struct {
 	base_p               float64
 	excit_p              float64
@@ -21,7 +22,7 @@ type Cell struct {
 }
 
 func (pl *Cell) Decrease() {
-	pl.pool -= 0.1
+	pl.pool -= 0.2
 }
 
 func (pl *Cell) Recover(delta int64) {
@@ -50,12 +51,25 @@ type Neuron struct {
 	state int64
 	cell    Cell
 	trans   Transmission
+
+	Excited bool // run-time tag, for inputs to mark
 }
 
 
-func (nn *Neuron) caculate_next_neuron_present_status() {
-	det_step := step - nn.cell.last_excit_timestamp
-	nn.cell.Recover(det_step)
+func (nn *Neuron) caculate_present_state() {
+	// recover pool energy
+	det_excit_step := step - nn.cell.last_excit_timestamp
+	nn.cell.Recover(det_excit_step)
+	// judge state
+	det_trans_step := step - nn.trans.last_trans_timestamp
+
+	if (det_excit_step < 5) {
+		nn.state = Blocked
+	} else if det_trans_step < 3 {
+		nn.state = Active
+	} else {
+		nn.state = Quiet
+	}
 }
 
 func (nn *Neuron) in_blocking_period() bool {
@@ -108,17 +122,17 @@ func (nn *Neuron) try_avergy_pre_neurons() {
 }
 
 func (this *Neuron) pass_potential(next *Neuron) {
-	next.caculate_present_status()
+	next.caculate_present_state()
 	if next.in_blocking_period() {
 		// if next neuron need recovered, then this neuron should not trans its excited and its excited_p should decrease
 		this.trans.Decrease()
 	} else {
 
 		if next.in_activing_period() {
-			temp_p := next.merge_probability()
+			temp_p := next.merge_probability(this.cell.excit_p)
 			if next.try_enough_energy() {
 				if next.try_excite() { // if could be excited,
-					next.cell.Decrease()
+					next.cell.Decrease() // equals try_avergy_pre_neurons
 					this.trans.Increase()
 					push_next_neuron_into_dequeue()
 					next.change_state(Blocked) // let next be into blocking_state
@@ -132,10 +146,10 @@ func (this *Neuron) pass_potential(next *Neuron) {
 		} else { // in scilent state
 			temp_p := next.cell.base_p
 			if next.try_enough_energy() {
-				next.cell.pool.Decrease()
+				next.cell.Decrease()
 				this.trans.Increase()
 				push_next_neuron_into_dequeue()
-				next.change_state(blocked) // just to mark a timestamp
+				next.change_state(Blocked) // just to mark a timestamp
 			} else {
 				next.change_state(Active) // just to mark a timestamp
 				// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
