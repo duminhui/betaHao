@@ -1,14 +1,9 @@
 package main
 
-import (
-	"ALE"
-	"fmt"
-	"neuron"
-)
+import "neuron"
 
 func main() {
 
-	ale := ALE.ALE{}
 	// controller, state := ale.Init()
 
 	test := neuron.NeuralNetwork{}
@@ -19,8 +14,8 @@ func main() {
 
 	// _ = "breakpoint"
 
-	test.Init(&ale)
-	test.Read_state(&ale)
+	test.Init()
+	test.Boot_up(100)
 	// test.Generate_inputs(5, 10)
 	// test.Generate_outputs(5, 10)
 
@@ -29,8 +24,8 @@ func main() {
 
 	// temp := test.Running_queue.Dequeue()
 
-	fmt.Println("inputs:", test.Inputs)
-	fmt.Println("outputs:", test.Outputs)
+	// fmt.Println("inputs:", test.Inputs)
+	// fmt.Println("outputs:", test.Outputs)
 	// fmt.Println("temp:", temp)
 
 }

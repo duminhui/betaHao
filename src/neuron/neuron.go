@@ -116,10 +116,6 @@ func (nn *Neuron) change_state(state int64) {
 	nn.state = state
 }
 
-func (nn *Neuron) push_into_dequeue(nn *Neuron) {
-
-}
-
 func (this *Neuron) pass_potential(next *Neuron) bool {
 	next.caculate_present_state()
 	if next.in_blocking_period() {
@@ -150,6 +146,7 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 				next.change_state(Blocked) // just to mark a timestamp
 				return true
 			} else {
+				next.cell.excit_p = temp_p
 				next.change_state(Active) // just to mark a timestamp
 				// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 			}

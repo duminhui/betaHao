@@ -6,7 +6,6 @@ import (
 	// "time"
 	"ALE"
 	"math"
-
 	"github.com/oleiade/lane"
 	// "sync"
 )
@@ -24,10 +23,13 @@ type Output struct {
 	mapping_relation map[*Neuron]int64
 }
 
+const (
+	start_frame = "sep"
+)
+
 type NeuralNetwork struct {
 	Neurons       []*Neuron
 	Running_queue *lane.Queue
-	start_frame   string
 	env           Environmenter
 
 	input             Input
@@ -92,7 +94,6 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 			}
 		}
 		if v < n {
-			// _ = "breakpoint"
 			nk.Add_edge(v, w)
 		}
 	}
@@ -200,7 +201,7 @@ func (nk *NeuralNetwork) check_outputs() {
 
 }
 
-func (nk *NeuralNetwork) push_into_dequeue(nn *Neuron) {
+func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
 	nk.Running_queue.Enqueue(nn)
 }
 
@@ -215,16 +216,18 @@ func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
-	_ = "breakpoint"
+	// _ = "breakpoint"
 	nk.put_inputs_into_queue(merge_inputs)
 
 }
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
-	for next := range neu.Post_neurons {
-		suc := neu.pass_potential(next)
-		if suc == true {
-			nk.put_inputs_into_queue(next)
+	if nn, ok := neu.(Neuron); ok {
+		for _, next := range nn.Post_neurons {
+			suc := nn.pass_potential(next)
+			if suc == true {
+				nk.put_into_queue(next)
+			}
 		}
 	}
 
@@ -233,12 +236,11 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 func (nk *NeuralNetwork) Boot_up(step int) {
 	// putting nil Neuron pointer at each start of step
 	// when dequeue a nil pointer, the system will judge inputs and outputs
-	nk.start_frame = "start"
-	nk.Running_queue.Enqueue(nk.start_frame)
+	nk.Running_queue.Enqueue(start_frame)
 	for ; step > 0; step-- {
 		neu := nk.Running_queue.Dequeue()
-		if neu == nk.start_frame {
-			nk.Running_queue.Enqueue(nk.start_frame)
+		if neu == start_frame {
+			nk.Running_queue.Enqueue(start_frame)
 			nk.check_outputs()
 			nk.check_inputs()
 		} else {
