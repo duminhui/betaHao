@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	// "time"
 	"ALE"
-	"math"
 	"github.com/oleiade/lane"
+	"math"
 	// "sync"
 )
 
@@ -236,8 +236,10 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 func (nk *NeuralNetwork) Boot_up(step int) {
 	// putting nil Neuron pointer at each start of step
 	// when dequeue a nil pointer, the system will judge inputs and outputs
+	_ = "breakpoint"
 	nk.Running_queue.Enqueue(start_frame)
 	for ; step > 0; step-- {
+		_ = "breakpoint"
 		neu := nk.Running_queue.Dequeue()
 		if neu == start_frame {
 			nk.Running_queue.Enqueue(start_frame)

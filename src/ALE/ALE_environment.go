@@ -101,12 +101,8 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 	ale.mask.x = 0
 	ale.mask.y = 0
 	ale.mask.radius = 10
-	ale.extern_command = exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
-	// extern_command := exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
-	// extern_command := exec.Command("ls")
-	// out, _ := extern_command.CombinedOutput()
-
-	// fmt.Println(string(out))
+	// ale.extern_command = exec.Command("./ale", "-game_controller", "fifo", "-display_screen", "true", "Breakout.bin")
+	ale.extern_command = exec.Command("./bin/ale", "-game_controller", "fifo", "Breakout.bin")
 
 	ale.stdin, ale.err = ale.extern_command.StdinPipe()
 	if ale.err != nil {
@@ -123,7 +119,6 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 	ale.reader = bufio.NewReader(ale.stdout)
 
 	ale.extern_command.Start()
-	// _ = "breakpoint"
 
 	line, _, err := ale.reader.ReadLine()
 
@@ -132,7 +127,7 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 	}
 
 	temp := strings.Split(string(line), "-")
-	// fmt.Println("line:", line)
+	_ = "breakpoint"
 
 	ale.height, _ = strconv.ParseInt(temp[0], 10, 64)
 	ale.width, _ = strconv.ParseInt(temp[1], 10, 64)
@@ -147,14 +142,13 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 
 	num_of_controller = ale.connect_to_the_controller()
 	num_of_state = 8*ale.height*ale.width + 2 //all the screen pixels, 8bits each pixels,
-	// plus is_terminated & is_scored
 
 	return
 
 }
 
 func (ale *ALE) Final() {
-	ale.extern_command.Wait()
+	// ale.extern_command.Wait()
 	ale.stdin.Close()
 	ale.stdout.Close()
 }
