@@ -23,10 +23,6 @@ type Output struct {
 	mapping_relation map[*Neuron]int64
 }
 
-const (
-	start_frame = "sep"
-)
-
 type NeuralNetwork struct {
 	Neurons       []*Neuron
 	Running_queue *lane.Queue
@@ -163,7 +159,7 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 func (nk *NeuralNetwork) Init() {
 	ale := ALE.ALE{}
 	nk.env = &ale
-	nk.Generate_nodes(1000)
+	nk.Generate_nodes(10000)
 
 	nk.Fast_generate_random_graph(1000, 0.3, 99)
 
@@ -175,12 +171,12 @@ func (nk *NeuralNetwork) Init() {
 }
 
 func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
-	nk.Running_queue = lane.NewQueue()
+	// nk.Running_queue = lane.NewQueue()
 	for _, value := range nk.input.mapping_relation {
 		if value.Excited == true {
 			nk.Running_queue.Enqueue(value)
 		}
-		fmt.Println("value:", value.Excited)
+		// fmt.Println("value:", value.Excited)
 	}
 
 }
@@ -236,15 +232,18 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 func (nk *NeuralNetwork) Boot_up(step int) {
 	// putting nil Neuron pointer at each start of step
 	// when dequeue a nil pointer, the system will judge inputs and outputs
+	start_frame := "sep"
 	_ = "breakpoint"
+	nk.Running_queue = lane.NewQueue()
 	nk.Running_queue.Enqueue(start_frame)
-	for ; step > 0; step-- {
+	for step > 0 {
 		_ = "breakpoint"
 		neu := nk.Running_queue.Dequeue()
 		if neu == start_frame {
 			nk.Running_queue.Enqueue(start_frame)
 			nk.check_outputs()
 			nk.check_inputs()
+			step--
 		} else {
 			nk.finish_exciting_transmitting(neu)
 		}

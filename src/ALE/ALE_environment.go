@@ -113,8 +113,8 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 	if ale.err != nil {
 		fmt.Println("stdout: ", ale.err)
 	}
-	fmt.Println("stdin: ", ale.stdin)
-	fmt.Println("stdout: ", ale.stdout)
+	// fmt.Println("stdin: ", ale.stdin)
+	// fmt.Println("stdout: ", ale.stdout)
 
 	ale.reader = bufio.NewReader(ale.stdout)
 
@@ -134,8 +134,8 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 
 	_, err = ale.stdin.Write([]byte("1,0,0,1\n"))
 
-	fmt.Println("height", ale.height)
-	fmt.Println("width", ale.width)
+	fmt.Println("height: ", ale.height)
+	fmt.Println("width: ", ale.width)
 
 	ale.screen_list = make([]int64, ale.height*ale.width)
 	fmt.Println("len of screen_list", len(ale.screen_list))
@@ -161,7 +161,7 @@ func submatrix(origin []int64, col, row, i, j, p, q int64) (result []int64) {
 			if (i+m) < 0 || (i+m) >= row || (j+n) < 0 || (j+n) >= col {
 				result[k] = 0
 			} else {
-				fmt.Println(k, (i+m)*col+j+n)
+				// fmt.Println(k, (i+m)*col+j+n)
 				result[k] = origin[(i+m)*col+j+n]
 			}
 			k++
