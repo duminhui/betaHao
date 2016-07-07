@@ -261,9 +261,14 @@ func (ale *ALE) central_mask_point(mask_influences []int64) (is_changed bool) {
 }
 
 func (ale *ALE) write_to_game(game_operator []int64) {
+	fmt.Println("n: ", len(game_operator))
 	n := len(game_operator)
 	j := int64(rand.Intn(n))
-	result := string(ale.config[ale.avaliable_controller[j]]) + ",18"
+	idx := game_operator[j]
+	fmt.Println("avaliable_controller: ", ale.avaliable_controller[idx])
+	out := ale.config[ale.avaliable_controller[idx]]
+	result := fmt.Sprintf("%d, %d\n", out, 18)
+	fmt.Println("result: ", result)
 
 	_, err := ale.stdin.Write([]byte(result))
 	if err != nil {
@@ -272,14 +277,21 @@ func (ale *ALE) write_to_game(game_operator []int64) {
 }
 
 func (ale *ALE) Write_action(game_operator []int64, mask_influences []int64) {
+	fmt.Println("game_operator: ", game_operator)
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	if len(game_operator) > 0 {
 		ale.write_to_game(game_operator)
+	} else {
+		rand := int64(rand.Intn(len(ale.avaliable_controller)))
+		ale.write_to_game(append(game_operator, rand))
 	}
 
 	if len(mask_influences) > 0 {
 		ale.central_mask_point(mask_influences)
+	} else {
+		rand := int64(rand.Intn(5))
+		ale.central_mask_point(append(mask_influences, rand))
 	}
 
 }

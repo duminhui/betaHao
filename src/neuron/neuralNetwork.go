@@ -115,7 +115,8 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 			input_order = append(input_order, input)
 		}
 	}
-	fmt.Printf("len of input_order: %v", len(input_order))
+	fmt.Printf("len of input_order: %v \n", len(input_order))
+	// fmt.Printf("len of inputs: %v \n", num)
 
 	nk.input.mapping_relation = make(map[int64]*Neuron, num)
 	for i, v := range input_order {
@@ -123,6 +124,8 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
 		// nk.Inputs[int64(i)] = nk.Neurons[v]
 	}
+
+	_ = "breakpoint"
 
 	return
 }
@@ -212,7 +215,6 @@ func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
-	// _ = "breakpoint"
 	nk.put_inputs_into_queue(merge_inputs)
 
 }
@@ -238,11 +240,15 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	nk.Running_queue.Enqueue(start_frame)
 	for step > 0 {
 		_ = "breakpoint"
+		if nk.Running_queue.Empty() {
+			fmt.Println("Dequeue is empty. Unexpectedly exit.")
+			break
+		}
 		neu := nk.Running_queue.Dequeue()
 		if neu == start_frame {
-			nk.Running_queue.Enqueue(start_frame)
 			nk.check_outputs()
 			nk.check_inputs()
+			nk.Running_queue.Enqueue(start_frame)
 			step--
 		} else {
 			nk.finish_exciting_transmitting(neu)
