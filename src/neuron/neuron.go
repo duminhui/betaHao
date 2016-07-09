@@ -2,6 +2,7 @@ package neuron
 
 import (
 	"math/rand"
+	"fmt"
 )
 
 const (
@@ -53,6 +54,11 @@ type Neuron struct {
 	trans Transmission
 
 	Excited bool // run-time tag, for inputs to mark
+}
+
+func (nn *Neuron) Init() {
+	nn.cell.base_p = 1
+	nn.cell.pool = 1
 }
 
 func (nn *Neuron) caculate_present_state() {
@@ -141,6 +147,7 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 		} else { // in scilent state
 			temp_p := next.cell.base_p
 			if next.try_enough_energy() {
+				fmt.Println("enough energy")
 				next.cell.Decrease()
 				this.trans.Increase()
 				next.change_state(Blocked) // just to mark a timestamp

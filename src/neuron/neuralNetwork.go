@@ -46,8 +46,8 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// nk.neurons = make([]*Neuron, num)
 	for i := 0; i < num; i++ {
 		p := &Neuron{}
-		p.cell.base_p = 1
-		// :p.Init()
+		// p.cell.base_p = 1
+		p.Init()
 		nk.Neurons = append(nk.Neurons, p)
 		// fmt.Println(nk.Neurons)
 	}
@@ -124,8 +124,6 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
 		// nk.Inputs[int64(i)] = nk.Neurons[v]
 	}
-
-	_ = "breakpoint"
 
 	return
 }
@@ -205,11 +203,13 @@ func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
 }
 
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
+	fmt.Println("inputs list length: ", nk.Running_queue.Size())
 	for _, v := range inputs {
 		if v > 0 {
 			nk.Running_queue.Enqueue(nk.input.mapping_relation[v])
 		}
 	}
+	fmt.Println("inputs list length: ", nk.Running_queue.Size())
 }
 
 func (nk *NeuralNetwork) check_inputs() {
@@ -220,11 +220,13 @@ func (nk *NeuralNetwork) check_inputs() {
 }
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
-	if nn, ok := neu.(Neuron); ok {
+	if nn, ok := neu.(*Neuron); ok {
 		for _, next := range nn.Post_neurons {
-			fmt.Println("neuron.trans before: ", neuron.trans)
+			fmt.Println("neuron.trans before: ", nn.trans.p)
+			fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			suc := nn.pass_potential(next)
-			fmt.Println("neuron.trans after: ", neuron.trans)
+			fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
+			fmt.Println("neuron.trans after: ", nn.trans.p)
 			if suc == true {
 				nk.put_into_queue(next)
 			}
@@ -237,7 +239,6 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	// putting nil Neuron pointer at each start of step
 	// when dequeue a nil pointer, the system will judge inputs and outputs
 	start_frame := "sep"
-	_ = "breakpoint"
 	nk.Running_queue = lane.NewQueue()
 	nk.Running_queue.Enqueue(start_frame)
 	for step > 0 {
@@ -248,11 +249,15 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		}
 		neu := nk.Running_queue.Dequeue()
 		if neu == start_frame {
+			fmt.Println("before list length: ", nk.Running_queue.Size())
 			nk.check_outputs()
+			fmt.Println("list length: ", nk.Running_queue.Size())
 			nk.check_inputs()
+			fmt.Println("after inputs list length: ", nk.Running_queue.Size())
 			nk.Running_queue.Enqueue(start_frame)
 			step--
 		} else {
+			fmt.Println("in finish trans")
 			nk.finish_exciting_transmitting(neu)
 		}
 	}

@@ -15,7 +15,7 @@ func main() {
 	// _ = "breakpoint"
 
 	test.Init()
-	test.Boot_up(10000)
+	test.Boot_up(100)
 	// test.Generate_inputs(5, 10)
 	// test.Generate_outputs(5, 10)
 
