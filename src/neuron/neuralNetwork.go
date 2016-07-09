@@ -222,7 +222,9 @@ func (nk *NeuralNetwork) check_inputs() {
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(Neuron); ok {
 		for _, next := range nn.Post_neurons {
+			fmt.Println("neuron.trans before: ", neuron.trans)
 			suc := nn.pass_potential(next)
+			fmt.Println("neuron.trans after: ", neuron.trans)
 			if suc == true {
 				nk.put_into_queue(next)
 			}
