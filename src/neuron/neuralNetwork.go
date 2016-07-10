@@ -221,12 +221,12 @@ func (nk *NeuralNetwork) check_inputs() {
 
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(*Neuron); ok {
+		// fmt.Printf("neuron.trans before: ", &nn.trans.p)
 		for _, next := range nn.Post_neurons {
-			fmt.Println("neuron.trans before: ", nn.trans.p)
-			fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
+			//fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			suc := nn.pass_potential(next)
-			fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
-			fmt.Println("neuron.trans after: ", nn.trans.p)
+			// fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
+			// fmt.Println("neuron.trans after: ", &nn.trans.p)
 			if suc == true {
 				nk.put_into_queue(next)
 			}
@@ -242,7 +242,7 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	nk.Running_queue = lane.NewQueue()
 	nk.Running_queue.Enqueue(start_frame)
 	for step > 0 {
-		_ = "breakpoint"
+		fmt.Println("step: ", step)
 		if nk.Running_queue.Empty() {
 			fmt.Println("Dequeue is empty. Unexpectedly exit.")
 			break
