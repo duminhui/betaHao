@@ -18,7 +18,8 @@ type Input struct {
 }
 
 type Output struct {
-	game_operatror   []*Neuron // 运行态
+	outputs			[]int64
+	game_operator   []*Neuron // 运行态
 	mask_influences  []*Neuron // 运行态
 	mapping_relation map[*Neuron]int64
 }
@@ -44,12 +45,12 @@ type Environmenter interface {
 func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// initialize 'num' numbers of neurons in the network
 	// nk.neurons = make([]*Neuron, num)
+	logger.Println(num, " of nodes.")
 	for i := 0; i < num; i++ {
 		p := &Neuron{}
-		// p.cell.base_p = 1
 		p.Init()
+
 		nk.Neurons = append(nk.Neurons, p)
-		// fmt.Println(nk.Neurons)
 	}
 }
 
@@ -69,6 +70,7 @@ func (nk *NeuralNetwork) Remove_edge(pre_neuron int, post_neuron int) {
 }
 
 func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64) {
+	count := 0
 	r := rand.New(rand.NewSource(seed))
 	// r := rand.New(rand.NewSource(time.Now().UnixNano())
 
@@ -91,20 +93,22 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 		}
 		if v < n {
 			nk.Add_edge(v, w)
+			count++
 		}
 	}
+	logger.Println(count, " of edges.")
 	fmt.Println("ER graph generated")
 
 }
 
 func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	input_order := make([]int64, num)
+	nk.inputs := make([]int64, num)
 	num_of_nodes := int64(len(nk.Neurons))
-	for int64(len(input_order)) < num {
+	for int64(len(nk.inputs)) < num {
 		input := r.Int63n(num_of_nodes)
 		exist := false
-		for _, v := range input_order {
+		for _, v := range nk.inputs {
 			if v == input {
 				exist = true
 				break
@@ -112,30 +116,33 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 		}
 
 		if !exist {
-			input_order = append(input_order, input)
+			nk.inputs = append(nk.inputs, input)
 		}
 	}
-	fmt.Printf("len of input_order: %v \n", len(input_order))
+	fmt.Printf("len of input_order: %v \n", len(nk.inputs))
 	// fmt.Printf("len of inputs: %v \n", num)
 
 	nk.input.mapping_relation = make(map[int64]*Neuron, num)
-	for i, v := range input_order {
+	for i, v := range nk.inputs {
 		nk.input.mapping_relation[int64(i)] = nk.Neurons[v]
 		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
 		// nk.Inputs[int64(i)] = nk.Neurons[v]
 	}
+
+	logger.Println(num, " of inputs: ")
+	logger.Println(nk.inputs)
 
 	return
 }
 
 func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	output_order := make([]int64, num)
+	nk.outputs := make([]int64, num)
 	num_of_nodes := int64(len(nk.Neurons))
-	for int64(len(output_order)) < num {
+	for int64(len(nk.outputs)) < num {
 		output := r.Int63n(num_of_nodes)
 		exist := false
-		for _, v := range output_order {
+		for _, v := range nk.outputs {
 			if v == output {
 				exist = true
 				break
@@ -143,13 +150,13 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 		}
 
 		if !exist {
-			output_order = append(output_order, output)
+			nk.outputs = append(nk.outputs, output)
 		}
 	}
 
 	nk.output.mapping_relation = make(map[*Neuron]int64, num)
 
-	for i, v := range output_order {
+	for i, v := range nk.outputs {
 		// nk.Outputs = append(nk.Outputs, nk.Neurons[i])
 		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 	}
@@ -183,10 +190,10 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 }
 
 func (nk *NeuralNetwork) check_outputs() {
-	oper := make([]int64, len(nk.output.game_operatror))
+	oper := make([]int64, len(nk.output.game_operator))
 	mask := make([]int64, len(nk.output.mask_influences))
 
-	for _, item := range nk.output.game_operatror {
+	for _, item := range nk.output.game_operator {
 		oper = append(oper, nk.output.mapping_relation[item])
 	}
 
