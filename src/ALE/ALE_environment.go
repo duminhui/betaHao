@@ -29,6 +29,9 @@ type ALE struct {
 	avaliable_controller []string
 	config               map[string]int64
 
+	num_of_operator int64
+	num_of_masker   int64
+
 	extern_command *exec.Cmd
 	stdin          io.WriteCloser
 	stdout         io.ReadCloser
@@ -140,7 +143,10 @@ func (ale *ALE) Init() (num_of_controller int64, num_of_state int64) {
 	ale.screen_list = make([]int64, ale.height*ale.width)
 	fmt.Println("len of screen_list", len(ale.screen_list))
 
-	num_of_controller = ale.connect_to_the_controller()
+	ale.num_of_operator = ale.connect_to_the_controller()
+	ale.num_of_masker = 4
+
+	num_of_controller = ale.num_of_operator + ale.num_of_masker
 	num_of_state = 8*ale.height*ale.width + 2 //all the screen pixels, 8bits each pixels,
 
 	return
@@ -261,7 +267,6 @@ func (ale *ALE) central_mask_point(mask_influences []int64) (is_changed bool) {
 }
 
 func (ale *ALE) write_to_game(game_operator []int64) {
-	fmt.Println("n: ", len(game_operator))
 	n := len(game_operator)
 	j := int64(rand.Intn(n))
 	idx := game_operator[j]
@@ -276,8 +281,24 @@ func (ale *ALE) write_to_game(game_operator []int64) {
 	}
 }
 
-func (ale *ALE) Write_action(game_operator []int64, mask_influences []int64) {
-	fmt.Println("game_operator: ", game_operator)
+func (ale *ALE) Write_action(game_controller []int64) {
+	// TODO: write_to_game & centrall_mask_point
+	game_operator := make([]int64, 0)
+	mask_influences := make([]int64, 0)
+
+	for _, v := range game_controller {
+		if v < ale.num_of_operator {
+			game_operator = append(game_operator, v)
+		} else {
+			mask_influences = append(mask_influences, v-ale.num_of_operator)
+		}
+
+	}
+	// fmt.Println("num of controller: ", ale.num_of_operator)
+	fmt.Println("game_controller: ", game_controller)
+	fmt.Println("mask_influences: ", mask_influences)
+	fmt.Println("n: ", len(game_operator))
+
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	if len(game_operator) > 0 {
