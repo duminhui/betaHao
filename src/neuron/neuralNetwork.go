@@ -5,7 +5,8 @@ import (
 	"math/rand"
 	// "log"
 	// "time"
-	"ALE"
+	// "ALE"
+	"virtualEnvironment"
 	"github.com/oleiade/lane"
 	"math"
 	// "sync"
@@ -165,7 +166,8 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 }
 
 func (nk *NeuralNetwork) Init() {
-	ale := ALE.ALE{}
+	// ale := ALE.ALE{}
+	ale := virtualEnvironment.VirtualENV{}
 	nk.env = &ale
 	nk.Generate_nodes(10000)
 
