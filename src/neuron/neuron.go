@@ -53,6 +53,7 @@ func (ts *Transmission) Increase() {
 }
 
 type Neuron struct {
+	Key string
 	// collect each pointers of the predecessors(neurons)
 	Pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)

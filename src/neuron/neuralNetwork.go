@@ -52,6 +52,7 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// logger.Println(num, " of nodes.")
 	for i := 0; i < num; i++ {
 		p := &Neuron{}
+		p.Key = i
 		p.Init()
 
 		nk.Neurons = append(nk.Neurons, p)
