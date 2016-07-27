@@ -1,14 +1,16 @@
 package neuron
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	// "log"
 	// "time"
 	// "ALE"
-	"virtualEnvironment"
 	"github.com/oleiade/lane"
 	"math"
+	"virtualEnvironment"
 	// "sync"
 )
 
@@ -48,11 +50,9 @@ type Environmenter interface {
 
 func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// initialize 'num' numbers of neurons in the network
-	// nk.neurons = make([]*Neuron, num)
-	// logger.Println(num, " of nodes.")
 	for i := 0; i < num; i++ {
 		p := &Neuron{}
-		p.Key = i
+		p.Key = string(i)
 		p.Init()
 
 		nk.Neurons = append(nk.Neurons, p)
@@ -69,8 +69,6 @@ func (nk *NeuralNetwork) Add_edge(pre_neuron int, post_neuron int) {
 }
 
 func (nk *NeuralNetwork) Remove_edge(pre_neuron int, post_neuron int) {
-	// v := 0
-	// w := 0
 	// TODO: is this necessary
 }
 
@@ -78,7 +76,6 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 	count := 0
 	r := rand.New(rand.NewSource(seed))
 	// r := rand.New(rand.NewSource(time.Now().UnixNano())
-
 	v := 0
 	w := -1
 	lp := math.Log(1.0 - p)
@@ -101,8 +98,7 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 			count++
 		}
 	}
-	fmt.Println(count, " of edges.")
-	fmt.Println("ER graph generated")
+	fmt.Println("ER graph generated", count, " of edges.")
 
 }
 
@@ -125,7 +121,6 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 		}
 	}
 	fmt.Printf("len of input_order: %v \n", len(nk.input_number))
-	// fmt.Printf("len of inputs: %v \n", num)
 
 	nk.input.mapping_relation = make(map[int64]*Neuron, num)
 	for i, v := range nk.input_number {
@@ -206,6 +201,24 @@ func (nk *NeuralNetwork) check_outputs() {
 
 	nk.env.Write_action(inpt)
 
+}
+
+func (nk *NeuralNetwork) Write_to(filename string) {
+	/*
+		for _, v := range nk.Neurons {
+			v.reversal_tag = false
+
+		}
+
+		begin := nk.Neurons[0]
+	*/
+
+	reslt, _ := json.Marshal(nk.Neurons[0].cell)
+
+	out, _ := os.Create(filename)
+	defer out.Close()
+
+	out.Write(reslt)
 }
 
 func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {

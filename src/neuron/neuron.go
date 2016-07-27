@@ -16,7 +16,7 @@ const (
 )
 
 type Cell struct {
-	base_p               float64
+	Base_p               float64
 	excit_p              float64
 	pool                 float64
 	last_excit_timestamp int64
@@ -34,7 +34,7 @@ func (pl *Cell) Recover(delta int64) {
 }
 
 type Transmission struct {
-	p                    float64
+	P                    float64
 	last_trans_timestamp int64
 }
 
@@ -53,7 +53,8 @@ func (ts *Transmission) Increase() {
 }
 
 type Neuron struct {
-	Key string
+	reversal_tag bool
+	Key          string
 	// collect each pointers of the predecessors(neurons)
 	Pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)

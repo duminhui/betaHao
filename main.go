@@ -29,6 +29,7 @@ func main() {
 
 	test.Init()
 	test.Boot_up(100)
+	test.Write_to("edges.txt")
 	// test.Generate_inputs(5, 10)
 	// test.Generate_outputs(5, 10)
 
