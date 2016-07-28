@@ -17,14 +17,12 @@ import (
 var step int64
 
 type Input struct {
-	inputs           []*Neuron // 运行态
+	// inputs           []*Neuron // 运行态
 	mapping_relation map[int64]*Neuron
 }
 
 type Output struct {
-	outputs []*Neuron
-	// game_operator   []*Neuron // 运行态
-	// mask_influences  []*Neuron // 运行态
+	outputs          []*Neuron // 运行态
 	mapping_relation map[*Neuron]int64
 }
 
@@ -104,7 +102,7 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 
 func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	nk.Input_number = make([]int64, num)
+	nk.Input_number = make([]int64, 0, num)
 	num_of_nodes := int64(len(nk.Neurons))
 	for int64(len(nk.Input_number)) < num {
 		input := r.Int63n(num_of_nodes)
@@ -134,10 +132,12 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 
 func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	nk.Output_number = make([]int64, num)
+	nk.Output_number = make([]int64, 0, num)
 	num_of_nodes := int64(len(nk.Neurons))
+	var output int64
+
 	for int64(len(nk.Output_number)) < num {
-		output := r.Int63n(num_of_nodes)
+		output = r.Int63n(num_of_nodes)
 		exist := false
 		for _, v := range nk.Output_number {
 			if v == output {
@@ -192,14 +192,14 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 func (nk *NeuralNetwork) check_outputs() {
 	inpt := make([]int64, 0)
 
-	fmt.Println("Before output:", inpt)
-	fmt.Println("	outputs length: ", len(nk.output.outputs))
+	// fmt.Println("Before output:", inpt)
+	// fmt.Println("	outputs length: ", len(nk.output.outputs))
 
 	for _, item := range nk.output.outputs {
 		inpt = append(inpt, nk.output.mapping_relation[item])
 	}
 
-	fmt.Println("After output:", inpt)
+	// fmt.Println("After output:", inpt)
 
 	nk.env.Write_action(inpt)
 
@@ -245,8 +245,8 @@ func (nk *NeuralNetwork) check_inputs() {
 }
 
 func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
-	if v, ok := nk.output.mapping_relation[neu]; ok {
-		nk.Output_number = append(nk.Output_number, v)
+	if _, ok := nk.output.mapping_relation[neu]; ok {
+		nk.output.outputs = append(nk.output.outputs, neu)
 		fmt.Println("outputs nodes added.")
 	}
 }
@@ -290,8 +290,8 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 			fmt.Println("after inputs list length: ", nk.running_queue.Size())
 			nk.running_queue.Enqueue(start_frame)
 
-			// nk.Input_number = make([]int64, 0, 10)
-			// nk.Output_number = make([]int64, 0, 10)
+			// nk.input.inputs = make([]int64, 0, 10)
+			nk.output.outputs = make([]*Neuron, 0)
 
 			step--
 		} else {
