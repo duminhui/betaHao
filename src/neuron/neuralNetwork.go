@@ -14,7 +14,7 @@ import (
 	// "sync"
 )
 
-var step int64 = 0
+var step int64
 
 type Input struct {
 	inputs           []*Neuron // 运行态
@@ -30,15 +30,15 @@ type Output struct {
 
 type NeuralNetwork struct {
 	Neurons       []*Neuron
-	Running_queue *lane.Queue
+	running_queue *lane.Queue
 	env           Environmenter
 
 	input             Input
 	output            Output
-	input_number      []int64
-	output_number     []int64
-	num_of_controller int64
-	num_of_state      int64
+	Input_number      []int64
+	Output_number     []int64
+	Num_of_controller int64
+	Num_of_state      int64
 }
 
 type Environmenter interface {
@@ -52,7 +52,7 @@ func (nk *NeuralNetwork) Generate_nodes(num int) {
 	// initialize 'num' numbers of neurons in the network
 	for i := 0; i < num; i++ {
 		p := &Neuron{}
-		p.Key = string(i)
+		p.Key = int64(i)
 		p.Init()
 
 		nk.Neurons = append(nk.Neurons, p)
@@ -63,8 +63,8 @@ func (nk *NeuralNetwork) Add_edge(pre_neuron int, post_neuron int) {
 	pre := nk.Neurons[pre_neuron]
 	post := nk.Neurons[post_neuron]
 
-	pre.Post_neurons = append(pre.Post_neurons, post)
-	post.Pre_neurons = append(post.Pre_neurons, pre)
+	pre.post_neurons = append(pre.post_neurons, post)
+	post.pre_neurons = append(post.pre_neurons, pre)
 
 }
 
@@ -104,12 +104,12 @@ func (nk *NeuralNetwork) Fast_generate_random_graph(n int, p float64, seed int64
 
 func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	nk.input_number = make([]int64, num)
+	nk.Input_number = make([]int64, num)
 	num_of_nodes := int64(len(nk.Neurons))
-	for int64(len(nk.input_number)) < num {
+	for int64(len(nk.Input_number)) < num {
 		input := r.Int63n(num_of_nodes)
 		exist := false
-		for _, v := range nk.input_number {
+		for _, v := range nk.Input_number {
 			if v == input {
 				exist = true
 				break
@@ -117,13 +117,13 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 		}
 
 		if !exist {
-			nk.input_number = append(nk.input_number, input)
+			nk.Input_number = append(nk.Input_number, input)
 		}
 	}
-	fmt.Printf("len of input_order: %v \n", len(nk.input_number))
+	fmt.Printf("len of input_order: %v \n", len(nk.Input_number))
 
 	nk.input.mapping_relation = make(map[int64]*Neuron, num)
-	for i, v := range nk.input_number {
+	for i, v := range nk.Input_number {
 		nk.input.mapping_relation[int64(i)] = nk.Neurons[v]
 		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
 		// nk.Inputs[int64(i)] = nk.Neurons[v]
@@ -134,12 +134,12 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 
 func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 	r := rand.New(rand.NewSource(seed))
-	nk.output_number = make([]int64, num)
+	nk.Output_number = make([]int64, num)
 	num_of_nodes := int64(len(nk.Neurons))
-	for int64(len(nk.output_number)) < num {
+	for int64(len(nk.Output_number)) < num {
 		output := r.Int63n(num_of_nodes)
 		exist := false
-		for _, v := range nk.output_number {
+		for _, v := range nk.Output_number {
 			if v == output {
 				exist = true
 				break
@@ -147,13 +147,13 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 		}
 
 		if !exist {
-			nk.output_number = append(nk.output_number, output)
+			nk.Output_number = append(nk.Output_number, output)
 		}
 	}
 
 	nk.output.mapping_relation = make(map[*Neuron]int64, num)
 
-	for i, v := range nk.output_number {
+	for i, v := range nk.Output_number {
 		// nk.Outputs = append(nk.Outputs, nk.Neurons[i])
 		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 	}
@@ -165,14 +165,16 @@ func (nk *NeuralNetwork) Init() {
 	// ale := ALE.ALE{}
 	ale := virtualEnvironment.VirtualENV{}
 	nk.env = &ale
-	nk.Generate_nodes(10000)
+	nk.Generate_nodes(20)
 
-	nk.Fast_generate_random_graph(1000, 0.3, 99)
+	nk.Fast_generate_random_graph(20, 0.3, 99)
 
-	num_of_outputs, num_of_inputs := nk.env.Init()
+	nk.Num_of_controller, nk.Num_of_state = nk.env.Init()
+	fmt.Println("environment state: ", nk.Num_of_state)
+	fmt.Println("environment controller: ", nk.Num_of_controller)
 
-	nk.Generate_inputs(num_of_inputs, 10) // num_of_inputs, seed
-	nk.Generate_outputs(num_of_outputs, 100)
+	nk.Generate_inputs(nk.Num_of_state, 10) // num_of_inputs, seed
+	nk.Generate_outputs(nk.Num_of_controller, 100)
 
 }
 
@@ -180,7 +182,7 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 	// nk.Running_queue = lane.NewQueue()
 	for _, value := range nk.input.mapping_relation {
 		if value.Excited == true {
-			nk.Running_queue.Enqueue(value)
+			nk.running_queue.Enqueue(value)
 		}
 		// fmt.Println("value:", value.Excited)
 	}
@@ -188,7 +190,7 @@ func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 }
 
 func (nk *NeuralNetwork) check_outputs() {
-	inpt := make([]int64, len(nk.output_number))
+	inpt := make([]int64, 0)
 
 	fmt.Println("Before output:", inpt)
 	fmt.Println("	outputs length: ", len(nk.output.outputs))
@@ -213,7 +215,7 @@ func (nk *NeuralNetwork) Write_to(filename string) {
 		begin := nk.Neurons[0]
 	*/
 
-	reslt, _ := json.Marshal(nk.Neurons[0].cell)
+	reslt, _ := json.Marshal(nk)
 
 	out, _ := os.Create(filename)
 	defer out.Close()
@@ -222,17 +224,17 @@ func (nk *NeuralNetwork) Write_to(filename string) {
 }
 
 func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
-	nk.Running_queue.Enqueue(nn)
+	nk.running_queue.Enqueue(nn)
 }
 
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
-	fmt.Println("inputs list length: ", nk.Running_queue.Size())
+	// fmt.Println("inputs list length: ", nk.running_queue.Size())
 	for _, v := range inputs {
 		if v > 0 {
-			nk.Running_queue.Enqueue(nk.input.mapping_relation[v])
+			nk.running_queue.Enqueue(nk.input.mapping_relation[v])
 		}
 	}
-	fmt.Println("inputs list length: ", nk.Running_queue.Size())
+	// fmt.Println("inputs list length: ", nk.running_queue.Size())
 }
 
 func (nk *NeuralNetwork) check_inputs() {
@@ -244,7 +246,7 @@ func (nk *NeuralNetwork) check_inputs() {
 
 func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 	if v, ok := nk.output.mapping_relation[neu]; ok {
-		nk.output_number = append(nk.output_number, v)
+		nk.Output_number = append(nk.Output_number, v)
 		fmt.Println("outputs nodes added.")
 	}
 }
@@ -252,7 +254,7 @@ func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(*Neuron); ok {
 		// fmt.Printf("neuron.trans before: ", &nn.trans.p)
-		for _, next := range nn.Post_neurons {
+		for _, next := range nn.post_neurons {
 			//fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			suc := nn.pass_potential(next)
 			// fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
@@ -271,25 +273,25 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	// putting nil Neuron pointer at each start of step
 	// when dequeue a nil pointer, the system will judge inputs and outputs
 	start_frame := "sep"
-	nk.Running_queue = lane.NewQueue()
-	nk.Running_queue.Enqueue(start_frame)
+	nk.running_queue = lane.NewQueue()
+	nk.running_queue.Enqueue(start_frame)
 	for step > 0 {
-		if nk.Running_queue.Empty() {
+		if nk.running_queue.Empty() {
 			fmt.Println("Dequeue is empty. Unexpectedly exit.")
 			break
 		}
-		neu := nk.Running_queue.Dequeue()
+		neu := nk.running_queue.Dequeue()
 		if neu == start_frame {
 			fmt.Println("step: ", step)
-			fmt.Println("before list length: ", nk.Running_queue.Size())
+			fmt.Println("before list length: ", nk.running_queue.Size())
 			nk.check_outputs()
-			fmt.Println("list length: ", nk.Running_queue.Size())
+			fmt.Println("list length: ", nk.running_queue.Size())
 			nk.check_inputs()
-			fmt.Println("after inputs list length: ", nk.Running_queue.Size())
-			nk.Running_queue.Enqueue(start_frame)
+			fmt.Println("after inputs list length: ", nk.running_queue.Size())
+			nk.running_queue.Enqueue(start_frame)
 
-			nk.input_number = make([]int64, 0, 10)
-			nk.output_number = make([]int64, 0, 10)
+			// nk.Input_number = make([]int64, 0, 10)
+			// nk.Output_number = make([]int64, 0, 10)
 
 			step--
 		} else {

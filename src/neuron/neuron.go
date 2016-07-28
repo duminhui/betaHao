@@ -1,7 +1,7 @@
 package neuron
 
 import (
-	// 	"fmt"
+	// "fmt"
 	"math/rand"
 )
 
@@ -39,42 +39,42 @@ type Transmission struct {
 }
 
 func (ts *Transmission) Decrease() {
-	ts.p -= 0.1
-	if ts.p < 0 {
-		ts.p = 0
+	ts.P -= 0.1
+	if ts.P < 0 {
+		ts.P = 0
 	}
 }
 
 func (ts *Transmission) Increase() {
-	ts.p += 0.1
-	if ts.p > 1 {
-		ts.p = 1
+	ts.P += 0.1
+	if ts.P > 1 {
+		ts.P = 1
 	}
 }
 
 type Neuron struct {
 	reversal_tag bool
-	Key          string
+	Key          int64
 	// collect each pointers of the predecessors(neurons)
-	Pre_neurons []*Neuron
+	pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)
-	Post_neurons []*Neuron
+	post_neurons []*Neuron
 
 	state int64
-	cell  Cell
-	trans Transmission
+	Cell  Cell
+	Trans Transmission
 
 	Excited bool // run-time tag, for inputs to mark
 }
 
 func (nn *Neuron) Init() {
-	nn.cell.base_p = 1
-	nn.cell.pool = 1
+	nn.Cell.Base_p = 1
+	nn.Cell.pool = 1
 }
 
 func (nn *Neuron) recover_energy() {
-	det_excit_step := step - nn.cell.last_excit_timestamp
-	nn.cell.Recover(det_excit_step)
+	det_excit_step := step - nn.Cell.last_excit_timestamp
+	nn.Cell.Recover(det_excit_step)
 }
 
 func (nn *Neuron) in_blocking_period() bool {
@@ -102,12 +102,12 @@ func (nn *Neuron) in_quiet_period() bool {
 }
 
 func (nn *Neuron) merge_probability(trans_p float64) (p float64) {
-	p = trans_p + nn.cell.excit_p
+	p = trans_p + nn.Cell.excit_p
 	return
 }
 
 func (nn *Neuron) try_enough_energy() bool {
-	if nn.cell.pool < 0.1 {
+	if nn.Cell.pool < 0.1 {
 		return false
 	} else {
 		return true
@@ -117,7 +117,7 @@ func (nn *Neuron) try_enough_energy() bool {
 func (nn *Neuron) try_excite() bool {
 	r := rand.New(rand.NewSource(16))
 	p := r.Float64()
-	if p < nn.cell.excit_p {
+	if p < nn.Cell.excit_p {
 		return true
 	} else {
 		return false
@@ -125,11 +125,11 @@ func (nn *Neuron) try_excite() bool {
 }
 
 func (nn *Neuron) change_state_from(state int64, is_excited bool) {
-	det_excit_step := step - nn.cell.last_excit_timestamp
-	det_trans_step := step - nn.trans.last_trans_timestamp
+	det_excit_step := step - nn.Cell.last_excit_timestamp
+	det_trans_step := step - nn.Trans.last_trans_timestamp
 
 	if is_excited == true {
-		nn.cell.last_excit_timestamp = step
+		nn.Cell.last_excit_timestamp = step
 		nn.state = Blocked
 	} else {
 
@@ -164,44 +164,44 @@ func (nn *Neuron) change_state_to(state int64) {
 func (this *Neuron) pass_potential(next *Neuron) bool {
 	next.recover_energy()
 	if next.in_blocking_period() {
-		this.trans.Decrease()
-		if next.cell.last_excit_timestamp >= 5 {
+		this.Trans.Decrease()
+		if next.Cell.last_excit_timestamp >= 5 {
 			next.change_state_to(Quiet)
 		}
 	}
 
 	if next.in_activing_period() {
-		temp_p := next.merge_probability(this.cell.excit_p)
+		temp_p := next.merge_probability(this.Cell.excit_p)
 		if next.try_enough_energy() {
 			if next.try_excite() { // if could be excited,
-				next.cell.Decrease() // equals try_avergy_pre_neurons
-				this.trans.Increase()
+				next.Cell.Decrease() // equals try_avergy_pre_neurons
+				this.Trans.Increase()
 
-				next.cell.last_excit_timestamp = step
+				next.Cell.last_excit_timestamp = step
 				next.change_state_to(Blocked) // let next be into blocking_state
 
 				return true
 			} else { // want excite, but no engery
-				next.cell.excit_p = temp_p
-				this.trans.last_trans_timestamp = step
+				next.Cell.excit_p = temp_p
+				this.Trans.last_trans_timestamp = step
 			}
 		} else { // not enough energy
-			next.cell.last_excit_timestamp = step
+			next.Cell.last_excit_timestamp = step
 			next.change_state_to(Blocked)
 		}
 	}
 
 	if next.in_quiet_period() { // in scilent state
-		temp_p := next.cell.base_p
+		temp_p := next.Cell.Base_p
 		if next.try_enough_energy() {
-			next.cell.Decrease()
-			this.trans.Increase()
-			next.cell.last_excit_timestamp = step
+			next.Cell.Decrease()
+			this.Trans.Increase()
+			next.Cell.last_excit_timestamp = step
 			next.change_state_to(Blocked) // just to mark a timestamp
 			return true
 		} else {
-			next.cell.excit_p = temp_p
-			this.trans.last_trans_timestamp = step
+			next.Cell.excit_p = temp_p
+			this.Trans.last_trans_timestamp = step
 			next.change_state_to(Active) // just to mark a timestamp
 			// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 		}
