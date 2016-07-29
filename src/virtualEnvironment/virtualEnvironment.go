@@ -14,14 +14,14 @@ func (ve *VirtualENV) Init() (num_of_controller, num_of_state int64) {
 	ve.num_of_controller = 5
 	ve.num_of_state = 10
 
-	num_of_state = ve.num_of_state
+	num_of_state = ve.num_of_state + 2
 	num_of_controller = ve.num_of_controller
 
 	return
 }
 
 func (ve *VirtualENV) Read_state() (screen_list []int64, is_terminated int64, is_scored int64) {
-	screen_list = make([]int64, ve.num_of_state)
+	screen_list = make([]int64, 0, ve.num_of_state)
 	rand.Seed(int64(time.Now().Nanosecond()))
 	// for random state
 	var r float64

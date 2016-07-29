@@ -158,6 +158,9 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 	}
 
+    fmt.Println("nk.Output_number: ", nk.Output_number)
+    fmt.Println("generate output mapping: ", nk.output.mapping_relation)
+
 	return
 }
 
@@ -199,7 +202,7 @@ func (nk *NeuralNetwork) check_outputs() {
 		inpt = append(inpt, nk.output.mapping_relation[item])
 	}
 
-	// fmt.Println("After output:", inpt)
+	fmt.Println(" output list:", inpt)
 
 	nk.env.Write_action(inpt)
 
@@ -229,9 +232,10 @@ func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
 
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 	// fmt.Println("inputs list length: ", nk.running_queue.Size())
-	for _, v := range inputs {
+    fmt.Println(" input mapping_relation: ", len(nk.input.mapping_relation))
+	for i, v := range inputs {
 		if v > 0 {
-			nk.running_queue.Enqueue(nk.input.mapping_relation[v])
+			nk.running_queue.Enqueue(nk.input.mapping_relation[int64(i)])
 		}
 	}
 	// fmt.Println("inputs list length: ", nk.running_queue.Size())
@@ -240,6 +244,7 @@ func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
+    fmt.Println(" input list: ", merge_inputs)
 	nk.put_inputs_into_queue(merge_inputs)
 
 }
@@ -282,12 +287,12 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		}
 		neu := nk.running_queue.Dequeue()
 		if neu == start_frame {
-			fmt.Println("step: ", step)
-			fmt.Println("before list length: ", nk.running_queue.Size())
+			fmt.Println("In step: ", step)
+			// fmt.Println("before list length: ", nk.running_queue.Size())
 			nk.check_outputs()
-			fmt.Println("list length: ", nk.running_queue.Size())
+			// fmt.Println("list length: ", nk.running_queue.Size())
 			nk.check_inputs()
-			fmt.Println("after inputs list length: ", nk.running_queue.Size())
+			// fmt.Println("after inputs list length: ", nk.running_queue.Size())
 			nk.running_queue.Enqueue(start_frame)
 
 			// nk.input.inputs = make([]int64, 0, 10)

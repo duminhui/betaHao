@@ -40,8 +40,8 @@ type Transmission struct {
 
 func (ts *Transmission) Decrease() {
 	ts.P -= 0.1
-	if ts.P < 0 {
-		ts.P = 0
+	if ts.P < -1 {
+		ts.P = -1
 	}
 }
 
