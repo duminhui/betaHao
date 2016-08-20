@@ -27,7 +27,7 @@ func (pl *Cell) Decrease() {
 }
 
 func (pl *Cell) Recover(delta int64) {
-	pl.pool = pl.pool + 0.1*float64(delta)
+	pl.pool = pl.pool + 0.01*float64(delta)
 	if pl.pool > 1 {
 		pl.pool = 1
 	}
@@ -39,14 +39,14 @@ type Transmission struct {
 }
 
 func (ts *Transmission) Decrease() {
-	ts.P -= 0.1
+	ts.P -= 0.01
 	if ts.P < -1 {
 		ts.P = -1
 	}
 }
 
 func (ts *Transmission) Increase() {
-	ts.P += 0.1
+	ts.P += 0.01
 	if ts.P > 1 {
 		ts.P = 1
 	}
@@ -68,7 +68,7 @@ type Neuron struct {
 }
 
 func (nn *Neuron) Init() {
-	nn.Cell.Base_p = 1
+	nn.Cell.Base_p = 0.5
 	nn.Cell.pool = 1
 }
 

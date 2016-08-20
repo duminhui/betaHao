@@ -158,8 +158,8 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 	}
 
-    fmt.Println("nk.Output_number: ", nk.Output_number)
-    fmt.Println("generate output mapping: ", nk.output.mapping_relation)
+	fmt.Println("nk.Output_number: ", nk.Output_number)
+	fmt.Println("generate output mapping: ", nk.output.mapping_relation)
 
 	return
 }
@@ -232,7 +232,7 @@ func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
 
 func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 	// fmt.Println("inputs list length: ", nk.running_queue.Size())
-    fmt.Println(" input mapping_relation: ", len(nk.input.mapping_relation))
+	fmt.Println(" input mapping_relation: ", len(nk.input.mapping_relation))
 	for i, v := range inputs {
 		if v > 0 {
 			nk.running_queue.Enqueue(nk.input.mapping_relation[int64(i)])
@@ -244,7 +244,7 @@ func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
 func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
-    fmt.Println(" input list: ", merge_inputs)
+	fmt.Println(" input list: ", merge_inputs)
 	nk.put_inputs_into_queue(merge_inputs)
 
 }
@@ -266,6 +266,9 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 			// fmt.Println("neuron.trans after: ", &nn.trans.p)
 			if suc == true {
 				fmt.Println("transed success")
+				// trans p increase 2times
+				nn.trans.Increase()
+				nn.trans.Increase()
 				nk.put_into_queue(next)
 				nk.check_if_outputs(next)
 			}
