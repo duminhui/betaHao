@@ -61,7 +61,7 @@ func (nk *NeuralNetwork) Add_edge(pre_neuron int, post_neuron int) {
 	pre := nk.Neurons[pre_neuron]
 	post := nk.Neurons[post_neuron]
 
-	pre.post_neurons = append(pre.post_neurons, post)
+	pre.post_neurons = append(pre.Axon.Trans.post_neurons, post)
 	post.pre_neurons = append(post.pre_neurons, pre)
 
 }

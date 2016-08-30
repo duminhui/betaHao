@@ -34,18 +34,31 @@ func (pl *Cell) Recover(delta int64) {
 }
 
 type Transmission struct {
-	P                    float64
-	last_trans_timestamp int64
+	post_neurons []*Neuron
+	Trans_p      []float64
 }
 
-func (ts *Transmission) Decrease() {
+func (trans Transmission) MarshalJSON() ([]byte, error) {
+	b := make([]byte, 0)
+	for i := 0; i < len(trans.Post_neurons); i++ {
+		b = append([]byte(fmt.Printf("conn:")))
+	}
+}
+
+type Axon struct {
+	P                    float64
+	last_trans_timestamp int64
+	Trans                Transmission
+}
+
+func (ts *Axon) Decrease() {
 	ts.P -= 0.01
 	if ts.P < -1 {
 		ts.P = -1
 	}
 }
 
-func (ts *Transmission) Increase() {
+func (ts *Axon) Increase() {
 	ts.P += 0.01
 	if ts.P > 1 {
 		ts.P = 1
@@ -58,11 +71,11 @@ type Neuron struct {
 	// collect each pointers of the predecessors(neurons)
 	pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)
-	post_neurons []*Neuron
+	// post_neurons []*Neuron
 
 	state int64
 	Cell  Cell
-	Trans Transmission
+	Axon  Axon
 
 	Excited bool // run-time tag, for inputs to mark
 }
