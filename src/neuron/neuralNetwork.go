@@ -267,8 +267,8 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 			if suc == true {
 				fmt.Println("transed success")
 				// trans p increase 2times
-				nn.trans.Increase()
-				nn.trans.Increase()
+				nn.Trans.Increase()
+				nn.Trans.Increase()
 				nk.put_into_queue(next)
 				nk.check_if_outputs(next)
 			}
