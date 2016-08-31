@@ -61,7 +61,7 @@ func (nk *NeuralNetwork) Add_edge(pre_neuron int, post_neuron int) {
 	pre := nk.Neurons[pre_neuron]
 	post := nk.Neurons[post_neuron]
 
-	pre.post_neurons = append(pre.Axon.Trans.post_neurons, post)
+	pre.Axon.Trans.post_neurons = append(pre.Axon.Trans.post_neurons, post)
 	post.pre_neurons = append(post.pre_neurons, pre)
 
 }
@@ -259,7 +259,7 @@ func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(*Neuron); ok {
 		// fmt.Printf("neuron.trans before: ", &nn.trans.p)
-		for _, next := range nn.post_neurons {
+		for _, next := range nn.Axon.Trans.post_neurons {
 			//fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			suc := nn.pass_potential(next)
 			// fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
@@ -267,14 +267,13 @@ func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 			if suc == true {
 				fmt.Println("transed success")
 				// trans p increase 2times
-				nn.Trans.Increase()
-				nn.Trans.Increase()
+				nn.Axon.Increase()
+				nn.Axon.Increase()
 				nk.put_into_queue(next)
 				nk.check_if_outputs(next)
 			}
 		}
 	}
-
 }
 
 func (nk *NeuralNetwork) Boot_up(step int) {

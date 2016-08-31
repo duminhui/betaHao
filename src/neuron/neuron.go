@@ -40,9 +40,10 @@ type Transmission struct {
 
 func (trans Transmission) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
-	for i := 0; i < len(trans.Post_neurons); i++ {
-		b = append([]byte(fmt.Printf("conn:")))
+	for i := 0; i < len(trans.post_neurons); i++ {
+		b = append([]byte("conn:"))
 	}
+	return b, nil
 }
 
 type Axon struct {
@@ -139,7 +140,7 @@ func (nn *Neuron) try_excite() bool {
 
 func (nn *Neuron) change_state_from(state int64, is_excited bool) {
 	det_excit_step := step - nn.Cell.last_excit_timestamp
-	det_trans_step := step - nn.Trans.last_trans_timestamp
+	det_trans_step := step - nn.Axon.last_trans_timestamp
 
 	if is_excited == true {
 		nn.Cell.last_excit_timestamp = step
@@ -157,9 +158,8 @@ func (nn *Neuron) change_state_from(state int64, is_excited bool) {
 		if state == Active {
 			if det_trans_step < 3 {
 				nn.state = Active
-
 			} else {
-
+				//TODO:??
 			}
 		}
 
@@ -177,7 +177,7 @@ func (nn *Neuron) change_state_to(state int64) {
 func (this *Neuron) pass_potential(next *Neuron) bool {
 	next.recover_energy()
 	if next.in_blocking_period() {
-		this.Trans.Decrease()
+		this.Axon.Decrease()
 		if next.Cell.last_excit_timestamp >= 5 {
 			next.change_state_to(Quiet)
 		}
@@ -188,7 +188,7 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 		if next.try_enough_energy() {
 			if next.try_excite() { // if could be excited,
 				next.Cell.Decrease() // equals try_avergy_pre_neurons
-				this.Trans.Increase()
+				this.Axon.Increase()
 
 				next.Cell.last_excit_timestamp = step
 				next.change_state_to(Blocked) // let next be into blocking_state
@@ -196,7 +196,7 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 				return true
 			} else { // want excite, but no engery
 				next.Cell.excit_p = temp_p
-				this.Trans.last_trans_timestamp = step
+				this.Axon.last_trans_timestamp = step
 			}
 		} else { // not enough energy
 			next.Cell.last_excit_timestamp = step
@@ -208,13 +208,13 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 		temp_p := next.Cell.Base_p
 		if next.try_enough_energy() {
 			next.Cell.Decrease()
-			this.Trans.Increase()
+			this.Axon.Increase()
 			next.Cell.last_excit_timestamp = step
 			next.change_state_to(Blocked) // just to mark a timestamp
 			return true
 		} else {
 			next.Cell.excit_p = temp_p
-			this.Trans.last_trans_timestamp = step
+			this.Axon.last_trans_timestamp = step
 			next.change_state_to(Active) // just to mark a timestamp
 			// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
 		}
