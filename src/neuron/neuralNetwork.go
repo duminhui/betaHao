@@ -62,6 +62,7 @@ func (nk *NeuralNetwork) Add_edge(pre_neuron int, post_neuron int) {
 	post := nk.Neurons[post_neuron]
 
 	pre.Axon.Trans.post_neurons = append(pre.Axon.Trans.post_neurons, post)
+    pre.Axon.Trans.p = append(pre.Axon.Trans.p, 0)
 	post.pre_neurons = append(post.pre_neurons, pre)
 
 }
@@ -184,7 +185,7 @@ func (nk *NeuralNetwork) Init() {
 func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
 	// nk.Running_queue = lane.NewQueue()
 	for _, value := range nk.input.mapping_relation {
-		if value.Excited == true {
+		if value.excited == true {
 			nk.running_queue.Enqueue(value)
 		}
 		// fmt.Println("value:", value.Excited)

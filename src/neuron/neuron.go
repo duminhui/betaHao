@@ -1,8 +1,9 @@
 package neuron
 
 import (
-	// "fmt"
+	"fmt"
 	"math/rand"
+    "encoding/json"
 )
 
 const (
@@ -35,14 +36,28 @@ func (pl *Cell) Recover(delta int64) {
 
 type Transmission struct {
 	post_neurons []*Neuron
-	Trans_p      []float64
+	p      []float64
 }
 
 func (trans Transmission) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
-	for i := 0; i < len(trans.post_neurons); i++ {
-		b = append([]byte("conn:"))
-	}
+
+    b = append(b, []byte(`{"Next":[`)...)
+    for i:=0; i < len(trans.post_neurons); i++ {
+        b = append(b, []byte(fmt.Sprintf("%d", trans.post_neurons[i].Key))...)
+        if i !=len(trans.post_neurons)-1 {
+            b = append(b, []byte(`,`)...)
+        }
+    }
+
+    b = append(b, []byte(`],`)...)
+
+    b = append(b, []byte(`"P":`)...)
+    t, _ := json.Marshal(trans.p)
+    b = append(b, t...)
+
+    b = append(b, []byte(`}`)...)
+    fmt.Println(string(b))
 	return b, nil
 }
 
@@ -78,7 +93,7 @@ type Neuron struct {
 	Cell  Cell
 	Axon  Axon
 
-	Excited bool // run-time tag, for inputs to mark
+	excited bool // run-time tag, for inputs to mark
 }
 
 func (nn *Neuron) Init() {
