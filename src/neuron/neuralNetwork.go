@@ -260,9 +260,9 @@ func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(*Neuron); ok {
 		// fmt.Printf("neuron.trans before: ", &nn.trans.p)
-		for _, next := range nn.Axon.Trans.post_neurons {
+		for i, next := range nn.Axon.Trans.post_neurons {
 			//fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
-			suc := nn.pass_potential(next)
+			suc := nn.pass_potential(i, next)
 			// fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			// fmt.Println("neuron.trans after: ", &nn.trans.p)
 			if suc == true {

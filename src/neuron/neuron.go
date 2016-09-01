@@ -57,7 +57,7 @@ func (trans Transmission) MarshalJSON() ([]byte, error) {
     b = append(b, t...)
 
     b = append(b, []byte(`}`)...)
-    fmt.Println(string(b))
+    // fmt.Println(string(b))
 	return b, nil
 }
 
@@ -67,10 +67,10 @@ type Axon struct {
 	Trans                Transmission
 }
 
-func (ts *Axon) Decrease() {
-	ts.P -= 0.01
-	if ts.P < -1 {
-		ts.P = -1
+func (ts *Axon) Decrease(i int) {
+	ts.Trans.p[i] -= 0.01
+	if ts.Trans.p[i] < -1 {
+		ts.Trans.p[i] = -1
 	}
 }
 
@@ -189,10 +189,11 @@ func (nn *Neuron) change_state_to(state int64) {
 	nn.state = state
 }
 
-func (this *Neuron) pass_potential(next *Neuron) bool {
+func (this *Neuron) pass_potential(i int, next *Neuron) bool {
+    /*
 	next.recover_energy()
 	if next.in_blocking_period() {
-		this.Axon.Decrease()
+		this.Axon.Decrease(i)
 		if next.Cell.last_excit_timestamp >= 5 {
 			next.change_state_to(Quiet)
 		}
@@ -236,4 +237,6 @@ func (this *Neuron) pass_potential(next *Neuron) bool {
 	}
 
 	return false
+    */
+    
 }
