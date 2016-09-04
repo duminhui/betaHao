@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
     "encoding/json"
+    // "gopkg.in/fatih/set.v0"
 )
 
 const (
@@ -12,26 +13,20 @@ const (
 
 const (
 	Quiet int64 = iota // be quiet when initialized
-	Active
+	// Active // cancel Active state, because it's the same as independent excite in multiple steps
+    Hebb
 	Blocked
 )
 
 type Cell struct {
 	Base_p               float64
-	excit_p              float64
+	float_p              float64
 	pool                 float64
 	last_excit_timestamp int64
 }
 
 func (pl *Cell) Decrease() {
 	pl.pool -= 0.2
-}
-
-func (pl *Cell) Recover(delta int64) {
-	pl.pool = pl.pool + 0.01*float64(delta)
-	if pl.pool > 1 {
-		pl.pool = 1
-	}
 }
 
 type Transmission struct {
@@ -62,7 +57,7 @@ func (trans Transmission) MarshalJSON() ([]byte, error) {
 }
 
 type Axon struct {
-	P                    float64
+	// P                    float64
 	last_trans_timestamp int64
 	Trans                Transmission
 }
@@ -74,11 +69,30 @@ func (ts *Axon) Decrease(i int) {
 	}
 }
 
-func (ts *Axon) Increase() {
+func (ts *Axon) Increase(i int) {
+    ts.Trans.p[i] += 0.01
+    if (ts.Trans.p[i]) > 1) {
+        ts.Trans.p[i] = 1
+    }
+    /*
 	ts.P += 0.01
 	if ts.P > 1 {
 		ts.P = 1
 	}
+    */
+}
+
+type Branch struct {
+    neu *Neuron
+    idx int
+}
+
+func (nn *Neuron) initial_branch() {
+    nn.excited_neurons := make([]*Branch 0)
+}
+
+func (nn *Neuron) add_to_branch(neu *Neuron,  idx int) {
+    nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx}
 }
 
 type Neuron struct {
@@ -87,7 +101,7 @@ type Neuron struct {
 	// collect each pointers of the predecessors(neurons)
 	pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)
-	// post_neurons []*Neuron
+    excited_neurons []*Branch // run-time tag, for excited pre_neurons
 
 	state int64
 	Cell  Cell
@@ -106,32 +120,8 @@ func (nn *Neuron) recover_energy() {
 	nn.Cell.Recover(det_excit_step)
 }
 
-func (nn *Neuron) in_blocking_period() bool {
-	if nn.state == Blocked {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (nn *Neuron) in_activing_period() bool {
-	if nn.state == Active {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (nn *Neuron) in_quiet_period() bool {
-	if nn.state == Quiet {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (nn *Neuron) merge_probability(trans_p float64) (p float64) {
-	p = trans_p + nn.Cell.excit_p
+func (nn *Neuron) merge(trans_p float64) {
+	nn.Cell.float_p = nn.Cell.float_p + trans_p
 	return
 }
 
@@ -143,100 +133,70 @@ func (nn *Neuron) try_enough_energy() bool {
 	}
 }
 
-func (nn *Neuron) try_excite() bool {
+func (nn *Neuron) binarization() bool {
 	r := rand.New(rand.NewSource(16))
 	p := r.Float64()
-	if p < nn.Cell.excit_p {
+	if p < nn.Cell.float_p {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (nn *Neuron) change_state_from(state int64, is_excited bool) {
-	det_excit_step := step - nn.Cell.last_excit_timestamp
-	det_trans_step := step - nn.Axon.last_trans_timestamp
+func (nn *Neuron) change_state() {
+    if(nn.state == Quiet) {
+        if(len(nn.excited_neurons) >= 2) {
+            nn.state = Hebb
+            nn.Cell.last_excit_timestamp = step
+        }
+    }
 
-	if is_excited == true {
-		nn.Cell.last_excit_timestamp = step
-		nn.state = Blocked
-	} else {
-
-		if state == Blocked {
-			if det_excit_step < 5 {
-				nn.state = Blocked
-			} else {
-				nn.state = Quiet
-			}
-		}
-
-		if state == Active {
-			if det_trans_step < 3 {
-				nn.state = Active
-			} else {
-				//TODO:??
-			}
-		}
-
-		if state == Quiet {
-			nn.state = Quiet
-		}
-
-	}
+    if(nn.state == Hebb) {
+        if(nn.Cell.last_excit_timestamp < step) {
+            nn.state = Blocked
+            nn.Cell.last_excit_timestamp = step
+        }
+    }
+    if(nn.state == Blocked) {
+        if(nn.Cell.last_excit_timestamp < step - 3) {
+            nn.state = Quiet
+        }
+    }
 }
 
-func (nn *Neuron) change_state_to(state int64) {
-	nn.state = state
+func (nn *Neuron) is_excited() (is_excited bool) {
+    if(nn.state == Hebb) {
+        for i := 0; i < len(nn.excited_neurons); i++ {
+            p = nn.excited_neurons[i].neu
+            idx = nn.excited_neurons[i].idx
+            p.Axon.Trans.Increase(idx)
+        }
+        is_excited = true
+    }
+
+    if(nn.state == Quiet) {
+        is_excited = nn.binarization()
+    }
+
+    if(nn.state == Bolcked) {
+        for i :=0; i < len(nn.excited_neurons); i++ {
+            p = nn.excited_neurons[i].neu
+            idx = nn.excited_neurons[i].idx
+            p.Axon.Trans.Decrease(idx)
+        }
+        is_excited = true
+    }
+    return
 }
 
-func (this *Neuron) pass_potential(i int, next *Neuron) bool {
-    /*
-	next.recover_energy()
-	if next.in_blocking_period() {
-		this.Axon.Decrease(i)
-		if next.Cell.last_excit_timestamp >= 5 {
-			next.change_state_to(Quiet)
-		}
-	}
+func (this *Neuron) pass_potential(i int, next *Neuron, set interface{}) {
+    for i:= 0; i<len(nn.post_neurons); i++ {
+        next = nn.trans.post_neurons[i]
+        p = nn.trans.p[i]
+        next.merge(p)
 
-	if next.in_activing_period() {
-		temp_p := next.merge_probability(this.Cell.excit_p)
-		if next.try_enough_energy() {
-			if next.try_excite() { // if could be excited,
-				next.Cell.Decrease() // equals try_avergy_pre_neurons
-				this.Axon.Increase()
-
-				next.Cell.last_excit_timestamp = step
-				next.change_state_to(Blocked) // let next be into blocking_state
-
-				return true
-			} else { // want excite, but no engery
-				next.Cell.excit_p = temp_p
-				this.Axon.last_trans_timestamp = step
-			}
-		} else { // not enough energy
-			next.Cell.last_excit_timestamp = step
-			next.change_state_to(Blocked)
-		}
-	}
-
-	if next.in_quiet_period() { // in scilent state
-		temp_p := next.Cell.Base_p
-		if next.try_enough_energy() {
-			next.Cell.Decrease()
-			this.Axon.Increase()
-			next.Cell.last_excit_timestamp = step
-			next.change_state_to(Blocked) // just to mark a timestamp
-			return true
-		} else {
-			next.Cell.excit_p = temp_p
-			this.Axon.last_trans_timestamp = step
-			next.change_state_to(Active) // just to mark a timestamp
-			// TODO: should there be a decrease of this.trans, maybe a distinguishing of growing up and mature is needed
-		}
-	}
-
-	return false
-    */
-    
+        // pass完需要讲后端所有神经元去重，入set
+        // s.Add(next)
+    }
 }
+

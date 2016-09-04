@@ -8,7 +8,8 @@ import (
 	// "log"
 	// "time"
 	// "ALE"
-	"github.com/oleiade/lane"
+	// "github.com/oleiade/lane"
+    "gopkg.in/fatih/seg.v0"
 	"math"
 	"virtualEnvironment"
 	// "sync"
@@ -28,7 +29,9 @@ type Output struct {
 
 type NeuralNetwork struct {
 	Neurons       []*Neuron
-	running_queue *lane.Queue
+	// running_queue *lane.Queue
+    old_set interface{} // running-time binary
+    set interface{} // running-time binary
 	env           Environmenter
 
 	input             Input
@@ -124,8 +127,6 @@ func (nk *NeuralNetwork) Generate_inputs(num int64, seed int64) {
 	nk.input.mapping_relation = make(map[int64]*Neuron, num)
 	for i, v := range nk.Input_number {
 		nk.input.mapping_relation[int64(i)] = nk.Neurons[v]
-		// fmt.Printf("inpurt_order: %v, %T\n", i, i)
-		// nk.Inputs[int64(i)] = nk.Neurons[v]
 	}
 
 	return
@@ -182,22 +183,8 @@ func (nk *NeuralNetwork) Init() {
 
 }
 
-func (nk *NeuralNetwork) Pick_excited_inputs_to_running_queue() {
-	// nk.Running_queue = lane.NewQueue()
-	for _, value := range nk.input.mapping_relation {
-		if value.excited == true {
-			nk.running_queue.Enqueue(value)
-		}
-		// fmt.Println("value:", value.Excited)
-	}
-
-}
-
 func (nk *NeuralNetwork) check_outputs() {
 	inpt := make([]int64, 0)
-
-	// fmt.Println("Before output:", inpt)
-	// fmt.Println("	outputs length: ", len(nk.output.outputs))
 
 	for _, item := range nk.output.outputs {
 		inpt = append(inpt, nk.output.mapping_relation[item])
@@ -210,15 +197,6 @@ func (nk *NeuralNetwork) check_outputs() {
 }
 
 func (nk *NeuralNetwork) Write_to(filename string) {
-	/*
-		for _, v := range nk.Neurons {
-			v.reversal_tag = false
-
-		}
-
-		begin := nk.Neurons[0]
-	*/
-
 	reslt, _ := json.Marshal(nk)
 
 	out, _ := os.Create(filename)
@@ -227,19 +205,14 @@ func (nk *NeuralNetwork) Write_to(filename string) {
 	out.Write(reslt)
 }
 
-func (nk *NeuralNetwork) put_into_queue(nn *Neuron) {
-	nk.running_queue.Enqueue(nn)
-}
-
-func (nk *NeuralNetwork) put_inputs_into_queue(inputs []int64) {
-	// fmt.Println("inputs list length: ", nk.running_queue.Size())
+func (nk *NeuralNetwork) collect_excited_outsides_into_set(inputs []int64) {
+    nk.input.mapping_relation
 	fmt.Println(" input mapping_relation: ", len(nk.input.mapping_relation))
 	for i, v := range inputs {
 		if v > 0 {
-			nk.running_queue.Enqueue(nk.input.mapping_relation[int64(i)])
+			nk.set.Add(nk.input.mapping_relation[int64(i)])
 		}
 	}
-	// fmt.Println("inputs list length: ", nk.running_queue.Size())
 }
 
 func (nk *NeuralNetwork) check_inputs() {
@@ -257,54 +230,56 @@ func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 	}
 }
 
+
 func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
 	if nn, ok := neu.(*Neuron); ok {
-		// fmt.Printf("neuron.trans before: ", &nn.trans.p)
 		for i, next := range nn.Axon.Trans.post_neurons {
-			//fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
 			suc := nn.pass_potential(i, next)
-			// fmt.Println("next state: ", next.state, next.cell.base_p, next.cell.excit_p, next.cell.pool, next.cell.last_excit_timestamp)
-			// fmt.Println("neuron.trans after: ", &nn.trans.p)
-			if suc == true {
-				fmt.Println("transed success")
-				// trans p increase 2times
-				nn.Axon.Increase()
-				nn.Axon.Increase()
-				nk.put_into_queue(next)
-				nk.check_if_outputs(next)
-			}
+            // pass后需要将后端神经元去重，入set
+            s.Add(next)
 		}
 	}
 }
 
 func (nk *NeuralNetwork) Boot_up(step int) {
-	// putting nil Neuron pointer at each start of step
-	// when dequeue a nil pointer, the system will judge inputs and outputs
-	start_frame := "sep"
-	nk.running_queue = lane.NewQueue()
-	nk.running_queue.Enqueue(start_frame)
+    nk.collect_excited_outsides_into_set()
 	for step > 0 {
-		if nk.running_queue.Empty() {
+        for ;old_set.isEmpty(); {
+            nn := old_set.Pop()
+            nn.change_state()
+
+            if (nn.is_excited()) {
+                for next in nn.trans.post_neurons {
+                    next.pass_potential()
+                    set.Add(set)
+                }
+                if(nn.is_outputs()) {
+                    // TODO: Do something!
+                }
+            }
+
+            old_set.Clear()
+            old_set = set
+            set.Clear()
+            step--
+
+        /*
+		if nk.s.Empty() {
 			fmt.Println("Dequeue is empty. Unexpectedly exit.")
 			break
 		}
 		neu := nk.running_queue.Dequeue()
 		if neu == start_frame {
-			fmt.Println("In step: ", step)
-			// fmt.Println("before list length: ", nk.running_queue.Size())
 			nk.check_outputs()
-			// fmt.Println("list length: ", nk.running_queue.Size())
 			nk.check_inputs()
-			// fmt.Println("after inputs list length: ", nk.running_queue.Size())
 			nk.running_queue.Enqueue(start_frame)
 
-			// nk.input.inputs = make([]int64, 0, 10)
 			nk.output.outputs = make([]*Neuron, 0)
 
 			step--
 		} else {
-			// fmt.Println("in finish trans")
 			nk.finish_exciting_transmitting(neu)
 		}
+        */
 	}
 }
