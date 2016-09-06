@@ -71,15 +71,9 @@ func (ts *Axon) Decrease(i int) {
 
 func (ts *Axon) Increase(i int) {
     ts.Trans.p[i] += 0.01
-    if (ts.Trans.p[i]) > 1) {
+    if (ts.Trans.p[i] > 1) {
         ts.Trans.p[i] = 1
     }
-    /*
-	ts.P += 0.01
-	if ts.P > 1 {
-		ts.P = 1
-	}
-    */
 }
 
 type Branch struct {
@@ -88,11 +82,11 @@ type Branch struct {
 }
 
 func (nn *Neuron) initial_branch() {
-    nn.excited_neurons := make([]*Branch 0)
+    nn.excited_neurons = make([]*Branch, 0)
 }
 
 func (nn *Neuron) add_to_branch(neu *Neuron,  idx int) {
-    nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx}
+    nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx})
 }
 
 type Neuron struct {
@@ -107,7 +101,8 @@ type Neuron struct {
 	Cell  Cell
 	Axon  Axon
 
-	excited bool // run-time tag, for inputs to mark
+	Is_input bool
+    Is_output bool
 }
 
 func (nn *Neuron) Init() {
@@ -115,10 +110,12 @@ func (nn *Neuron) Init() {
 	nn.Cell.pool = 1
 }
 
+/*
 func (nn *Neuron) recover_energy() {
 	det_excit_step := step - nn.Cell.last_excit_timestamp
 	nn.Cell.Recover(det_excit_step)
 }
+*/
 
 func (nn *Neuron) merge(trans_p float64) {
 	nn.Cell.float_p = nn.Cell.float_p + trans_p
@@ -167,9 +164,9 @@ func (nn *Neuron) change_state() {
 func (nn *Neuron) is_excited() (is_excited bool) {
     if(nn.state == Hebb) {
         for i := 0; i < len(nn.excited_neurons); i++ {
-            p = nn.excited_neurons[i].neu
-            idx = nn.excited_neurons[i].idx
-            p.Axon.Trans.Increase(idx)
+			p := nn.excited_neurons[i].neu
+			idx := nn.excited_neurons[i].idx
+            p.Axon.Increase(idx)
         }
         is_excited = true
     }
@@ -178,25 +175,18 @@ func (nn *Neuron) is_excited() (is_excited bool) {
         is_excited = nn.binarization()
     }
 
-    if(nn.state == Bolcked) {
+    if(nn.state == Blocked) {
         for i :=0; i < len(nn.excited_neurons); i++ {
-            p = nn.excited_neurons[i].neu
-            idx = nn.excited_neurons[i].idx
-            p.Axon.Trans.Decrease(idx)
+			p := nn.excited_neurons[i].neu
+			idx := nn.excited_neurons[i].idx
+            p.Axon.Decrease(idx)
         }
         is_excited = true
     }
     return
 }
 
-func (this *Neuron) pass_potential(i int, next *Neuron, set interface{}) {
-    for i:= 0; i<len(nn.post_neurons); i++ {
-        next = nn.trans.post_neurons[i]
-        p = nn.trans.p[i]
-        next.merge(p)
-
-        // pass完需要讲后端所有神经元去重，入set
-        // s.Add(next)
-    }
+func (nn *Neuron) pass_potential(next *Neuron, i int) {
+	p := nn.Axon.Trans.p[i]
+	next.merge(p)
 }
-
