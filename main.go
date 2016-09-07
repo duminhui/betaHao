@@ -27,7 +27,7 @@ func main() {
 
 	// _ = "breakpoint"
 
-	step := 100
+	step := 3
 	test.Init()
 	test.Boot_up(step)
 	test.Write_to("edges.txt")

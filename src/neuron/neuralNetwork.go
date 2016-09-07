@@ -163,6 +163,7 @@ func (nk *NeuralNetwork) Generate_outputs(num int64, seed int64) {
 	for i, v := range nk.Output_number {
 		nk.output.mapping_relation[nk.Neurons[v]] = int64(i)
 		nk.Neurons[v].Is_output = true
+		nk.Neurons[v].Cell.Base_p = 1
 	}
 
 	fmt.Println("nk.Output_number: ", nk.Output_number)
@@ -206,7 +207,6 @@ func (nk *NeuralNetwork) check_inputs() {
 	screen_inputs, is_terminated, is_scored := nk.env.Read_state()
 	merge_inputs := append(screen_inputs, is_terminated, is_scored)
 	fmt.Println(" input list: ", merge_inputs)
-	// TODO: merge_inputs or mapping_relation ?
 	for i, v := range merge_inputs {
 		if v > 0 {
 			// fmt.Println("input: ", nk.input.mapping_relation[int64(i)])
@@ -245,6 +245,7 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 			nn.change_state()
 
 			if nn.is_excited() {
+				// fmt.Println("neuron", &nn, "is excited.")
 				for i, next := range nn.Axon.Trans.post_neurons {
 					nn.pass_potential(next, i)
 					nk.current_set.Add(next)

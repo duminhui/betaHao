@@ -131,6 +131,7 @@ func (nn *Neuron) try_enough_energy() bool {
 }
 
 func (nn *Neuron) binarization() bool {
+	// TODO: float p recover(), recover only happened when binarization
 	r := rand.New(rand.NewSource(16))
 	p := r.Float64()
 	if p < nn.Cell.float_p {
@@ -141,6 +142,7 @@ func (nn *Neuron) binarization() bool {
 }
 
 func (nn *Neuron) change_state() {
+	// fmt.Println(nn.Key, " neuron, State Before: ", nn.state)
     if(nn.state == Quiet) {
         if(len(nn.excited_neurons) >= 2) {
             nn.state = Hebb
@@ -154,14 +156,18 @@ func (nn *Neuron) change_state() {
             nn.Cell.last_excit_timestamp = step
         }
     }
+
     if(nn.state == Blocked) {
         if(nn.Cell.last_excit_timestamp < step - 3) {
             nn.state = Quiet
         }
     }
+	// fmt.Println("State After: ", nn.state)
 }
 
 func (nn *Neuron) is_excited() (is_excited bool) {
+	// float_p 的问题还没有解决，合适恢复
+	// fmt.Println("this neuron's state:", nn.state)
     if(nn.state == Hebb) {
         for i := 0; i < len(nn.excited_neurons); i++ {
 			p := nn.excited_neurons[i].neu
@@ -172,6 +178,7 @@ func (nn *Neuron) is_excited() (is_excited bool) {
     }
 
     if(nn.state == Quiet) {
+		// fmt.Println(nn.Key, " neuron needs binarization")
         is_excited = nn.binarization()
     }
 
@@ -183,10 +190,16 @@ func (nn *Neuron) is_excited() (is_excited bool) {
         }
         is_excited = true
     }
+
+	// intput 节点的默认兴奋问题
+	if (nn.Is_input) {
+		is_excited = true
+	}
     return
 }
 
 func (nn *Neuron) pass_potential(next *Neuron, i int) {
+	nn.Axon.Increase(i)
 	p := nn.Axon.Trans.p[i]
 	next.merge(p)
 }
