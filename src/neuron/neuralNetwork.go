@@ -11,7 +11,6 @@ import (
 	// "github.com/oleiade/lane"
 	"math"
 	"virtualEnvironment"
-
 	"gopkg.in/fatih/set.v0"
 	// "sync"
 )
@@ -242,10 +241,10 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		for !nk.old_set.IsEmpty() {
 
 			nn := nk.old_set.Pop().(*Neuron)
+			fmt.Println(nk.old_set.Size())
 			nn.change_state()
 
 			if nn.is_excited() {
-				// fmt.Println("neuron", &nn, "is excited.")
 				for i, next := range nn.Axon.Trans.post_neurons {
 					nn.pass_potential(next, i)
 					nk.current_set.Add(next)
@@ -261,8 +260,14 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 
 		nk.old_set.Clear()
 		nk.output.clear()
+		fmt.Println("old_size: ", nk.old_set.Size())
+		fmt.Println("new_size: ", nk.current_set.Size())
 		nk.old_set = nk.current_set
+		fmt.Println("  old_size: ", &nk.old_set ,"\n")
+		fmt.Println("  new_size: ", &nk.current_set)
 		nk.current_set.Clear()
+
 		step--
+		fmt.Println("print step: ", step)
 	}
 }

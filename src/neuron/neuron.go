@@ -110,13 +110,6 @@ func (nn *Neuron) Init() {
 	nn.Cell.pool = 1
 }
 
-/*
-func (nn *Neuron) recover_energy() {
-	det_excit_step := step - nn.Cell.last_excit_timestamp
-	nn.Cell.Recover(det_excit_step)
-}
-*/
-
 func (nn *Neuron) merge(trans_p float64) {
 	nn.Cell.float_p = nn.Cell.float_p + trans_p
 	return
