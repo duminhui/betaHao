@@ -1,10 +1,10 @@
 package neuron
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
-    "encoding/json"
-    // "gopkg.in/fatih/set.v0"
+	// "gopkg.in/fatih/set.v0"
 )
 
 const (
@@ -13,8 +13,7 @@ const (
 
 const (
 	Quiet int64 = iota // be quiet when initialized
-	// Active // cancel Active state, because it's the same as independent excite in multiple steps
-    Hebb
+	Hebb
 	Blocked
 )
 
@@ -31,28 +30,27 @@ func (pl *Cell) Decrease() {
 
 type Transmission struct {
 	post_neurons []*Neuron
-	p      []float64
+	p            []float64
 }
 
 func (trans Transmission) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
 
-    b = append(b, []byte(`{"Next":[`)...)
-    for i:=0; i < len(trans.post_neurons); i++ {
-        b = append(b, []byte(fmt.Sprintf("%d", trans.post_neurons[i].Key))...)
-        if i !=len(trans.post_neurons)-1 {
-            b = append(b, []byte(`,`)...)
-        }
-    }
+	b = append(b, []byte(`{"Next":[`)...)
+	for i := 0; i < len(trans.post_neurons); i++ {
+		b = append(b, []byte(fmt.Sprintf("%d", trans.post_neurons[i].Key))...)
+		if i != len(trans.post_neurons)-1 {
+			b = append(b, []byte(`,`)...)
+		}
+	}
 
-    b = append(b, []byte(`],`)...)
+	b = append(b, []byte(`],`)...)
 
-    b = append(b, []byte(`"P":`)...)
-    t, _ := json.Marshal(trans.p)
-    b = append(b, t...)
+	b = append(b, []byte(`"P":`)...)
+	t, _ := json.Marshal(trans.p)
+	b = append(b, t...)
 
-    b = append(b, []byte(`}`)...)
-    // fmt.Println(string(b))
+	b = append(b, []byte(`}`)...)
 	return b, nil
 }
 
@@ -70,23 +68,23 @@ func (ts *Axon) Decrease(i int) {
 }
 
 func (ts *Axon) Increase(i int) {
-    ts.Trans.p[i] += 0.01
-    if (ts.Trans.p[i] > 1) {
-        ts.Trans.p[i] = 1
-    }
+	ts.Trans.p[i] += 0.01
+	if ts.Trans.p[i] > 1 {
+		ts.Trans.p[i] = 1
+	}
 }
 
 type Branch struct {
-    neu *Neuron
-    idx int
+	neu *Neuron
+	idx int
 }
 
 func (nn *Neuron) initial_branch() {
-    nn.excited_neurons = make([]*Branch, 0)
+	nn.excited_neurons = make([]*Branch, 0)
 }
 
-func (nn *Neuron) add_to_branch(neu *Neuron,  idx int) {
-    nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx})
+func (nn *Neuron) add_to_branch(neu *Neuron, idx int) {
+	nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx})
 }
 
 type Neuron struct {
@@ -95,19 +93,27 @@ type Neuron struct {
 	// collect each pointers of the predecessors(neurons)
 	pre_neurons []*Neuron
 	// collect each pointers of the successors(neurons)
-    excited_neurons []*Branch // run-time tag, for excited pre_neurons
+	excited_neurons []*Branch // run-time tag, for excited pre_neurons
 
 	state int64
 	Cell  Cell
 	Axon  Axon
 
-	Is_input bool
-    Is_output bool
+	Is_input  bool
+	Is_output bool
 }
 
 func (nn *Neuron) Init() {
 	nn.Cell.Base_p = 0.5
 	nn.Cell.pool = 1
+}
+
+func (next *Neuron) branch_init() {
+	next.excited_neurons = make([]*Branch, 0)
+}
+
+func (nn *Neuron) add_to(next *Neuron, i int) {
+	next.excited_neurons = append(next.excited_neurons, &Branch{next, i})
 }
 
 func (nn *Neuron) merge(trans_p float64) {
@@ -135,64 +141,65 @@ func (nn *Neuron) binarization() bool {
 }
 
 func (nn *Neuron) change_state() {
-	// fmt.Println(nn.Key, " neuron, State Before: ", nn.state)
-    if(nn.state == Quiet) {
-        if(len(nn.excited_neurons) >= 2) {
-            nn.state = Hebb
-            nn.Cell.last_excit_timestamp = step
-        }
-    }
+	if nn.state == Quiet {
+		if len(nn.excited_neurons) >= 2 {
+			nn.state = Hebb
+			nn.Cell.last_excit_timestamp = step
+		}
+	}
 
-    if(nn.state == Hebb) {
-        if(nn.Cell.last_excit_timestamp < step) {
-            nn.state = Blocked
-            nn.Cell.last_excit_timestamp = step
-        }
-    }
+	if nn.state == Hebb {
+		// nn.state = Blocked
+		if nn.Cell.last_excit_timestamp > step+3 {
+			nn.state = Blocked
+			nn.Cell.last_excit_timestamp = step
+		}
+	}
 
-    if(nn.state == Blocked) {
-        if(nn.Cell.last_excit_timestamp < step - 3) {
-            nn.state = Quiet
-        }
-    }
-	// fmt.Println("State After: ", nn.state)
+	if nn.state == Blocked {
+		fmt.Println("Blocked")
+		if nn.Cell.last_excit_timestamp > step+10 {
+			nn.state = Quiet
+		}
+	}
 }
 
 func (nn *Neuron) is_excited() (is_excited bool) {
 	// float_p 的问题还没有解决，合适恢复
 	// fmt.Println("this neuron's state:", nn.state)
-    if(nn.state == Hebb) {
-        for i := 0; i < len(nn.excited_neurons); i++ {
+	if nn.state == Hebb {
+		for i := 0; i < len(nn.excited_neurons); i++ {
 			p := nn.excited_neurons[i].neu
 			idx := nn.excited_neurons[i].idx
-            p.Axon.Increase(idx)
-        }
-        is_excited = true
-    }
-
-    if(nn.state == Quiet) {
-		// fmt.Println(nn.Key, " neuron needs binarization")
-        is_excited = nn.binarization()
-    }
-
-    if(nn.state == Blocked) {
-        for i :=0; i < len(nn.excited_neurons); i++ {
-			p := nn.excited_neurons[i].neu
-			idx := nn.excited_neurons[i].idx
-            p.Axon.Decrease(idx)
-        }
-        is_excited = true
-    }
-
-	// intput 节点的默认兴奋问题
-	if (nn.Is_input) {
+			p.Axon.Increase(idx)
+		}
 		is_excited = true
 	}
-    return
+
+	if nn.state == Quiet {
+		// fmt.Println(nn.Key, " neuron needs binarization")
+		is_excited = nn.binarization()
+	}
+
+	if nn.state == Blocked {
+		fmt.Println("Block")
+		for i := 0; i < len(nn.excited_neurons); i++ {
+			p := nn.excited_neurons[i].neu
+			idx := nn.excited_neurons[i].idx
+			p.Axon.Decrease(idx)
+		}
+		is_excited = true
+	}
+
+	// input 节点的默认兴奋问题
+	if nn.Is_input {
+		is_excited = true
+	}
+	return
 }
 
 func (nn *Neuron) pass_potential(next *Neuron, i int) {
-	nn.Axon.Increase(i)
+	// nn.Axon.Increase(i)
 	p := nn.Axon.Trans.p[i]
 	next.merge(p)
 }

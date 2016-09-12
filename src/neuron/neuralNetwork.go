@@ -175,9 +175,11 @@ func (nk *NeuralNetwork) Init() {
 	// ale := ALE.ALE{}
 	ale := virtualEnvironment.VirtualENV{}
 	nk.env = &ale
-	nk.Generate_nodes(20)
 
-	nk.Fast_generate_random_graph(20, 0.3, 99)
+	nodes := 60
+	nk.Generate_nodes(nodes)
+
+	nk.Fast_generate_random_graph(nodes, 0.7, 99)
 
 	nk.Num_of_controller, nk.Num_of_state = nk.env.Init()
 	fmt.Println("environment state: ", nk.Num_of_state)
@@ -208,7 +210,6 @@ func (nk *NeuralNetwork) check_inputs() {
 	fmt.Println(" input list: ", merge_inputs)
 	for i, v := range merge_inputs {
 		if v > 0 {
-			// fmt.Println("input: ", nk.input.mapping_relation[int64(i)])
 			nk.current_set.Add(nk.input.mapping_relation[int64(i)])
 		}
 	}
@@ -221,32 +222,26 @@ func (nk *NeuralNetwork) check_if_outputs(neu *Neuron) {
 	}
 }
 
-func (nk *NeuralNetwork) finish_exciting_transmitting(neu interface{}) {
-	if nn, ok := neu.(*Neuron); ok {
-		for i, next := range nn.Axon.Trans.post_neurons {
-			nn.pass_potential(next, i)
-			// pass后需要将后端神经元去重，入set
-			nk.current_set.Add(next)
-		}
-	}
-}
-
 func (nk *NeuralNetwork) Boot_up(step int) {
-	// current_set := set.New()
-	// old_set := set.New()
-
 	for step > 0 {
+
 		nk.check_inputs()
 
 		for !nk.old_set.IsEmpty() {
 
 			nn := nk.old_set.Pop().(*Neuron)
-			fmt.Println(nk.old_set.Size())
+
 			nn.change_state()
 
 			if nn.is_excited() {
+				for _, v := range nn.excited_neurons {
+					p := v.neu
+					p.Axon.Increase(v.idx)
+				}
+				nn.branch_init()
 				for i, next := range nn.Axon.Trans.post_neurons {
 					nn.pass_potential(next, i)
+					next.add_to(nn, i)
 					nk.current_set.Add(next)
 				}
 
@@ -258,16 +253,16 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 
 		nk.check_outputs()
 
-		nk.old_set.Clear()
 		nk.output.clear()
-		fmt.Println("old_size: ", nk.old_set.Size())
 		fmt.Println("new_size: ", nk.current_set.Size())
-		nk.old_set = nk.current_set
-		fmt.Println("  old_size: ", &nk.old_set ,"\n")
-		fmt.Println("  new_size: ", &nk.current_set)
+
+		nk.old_set = nk.current_set.Copy()
+		fmt.Println(" current_set: ", nk.current_set.Size())
+
 		nk.current_set.Clear()
 
 		step--
+
 		fmt.Println("print step: ", step)
 	}
 }
