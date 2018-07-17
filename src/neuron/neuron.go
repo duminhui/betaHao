@@ -1,205 +1,158 @@
 package neuron
 
 import (
-	"encoding/json"
-	"fmt"
 	"math/rand"
-	// "gopkg.in/fatih/set.v0"
 )
 
 const (
-	MAX_OUTPUTS = 5
+	MAX_BRANCHES = 3
 )
 
 const (
-	Quiet int64 = iota // be quiet when initialized
-	Hebb
-	Blocked
+	Excited     int64 = 0
+	Unexcited   int64 = 1
+	UnInhibited int64 = 2
+	Inhibited   int64 = 3
 )
-
-type Cell struct {
-	Base_p               float64
-	float_p              float64
-	pool                 float64
-	last_excit_timestamp int64
-}
-
-func (pl *Cell) Decrease() {
-	pl.pool -= 0.2
-}
-
-type Transmission struct {
-	post_neurons []*Neuron
-	p            []float64
-}
-
-func (trans Transmission) MarshalJSON() ([]byte, error) {
-	b := make([]byte, 0)
-
-	b = append(b, []byte(`{"Next":[`)...)
-	for i := 0; i < len(trans.post_neurons); i++ {
-		b = append(b, []byte(fmt.Sprintf("%d", trans.post_neurons[i].Key))...)
-		if i != len(trans.post_neurons)-1 {
-			b = append(b, []byte(`,`)...)
-		}
-	}
-
-	b = append(b, []byte(`],`)...)
-
-	b = append(b, []byte(`"P":`)...)
-	t, _ := json.Marshal(trans.p)
-	b = append(b, t...)
-
-	b = append(b, []byte(`}`)...)
-	return b, nil
-}
-
-type Axon struct {
-	// P                    float64
-	last_trans_timestamp int64
-	Trans                Transmission
-}
-
-func (ts *Axon) Decrease(i int) {
-	ts.Trans.p[i] -= 0.01
-	if ts.Trans.p[i] < -1 {
-		ts.Trans.p[i] = -1
-	}
-}
-
-func (ts *Axon) Increase(i int) {
-	ts.Trans.p[i] += 0.01
-	if ts.Trans.p[i] > 1 {
-		ts.Trans.p[i] = 1
-	}
-}
 
 type Branch struct {
-	neu *Neuron
-	idx int
+	next        *Neuron
+	probability float64
 }
 
-func (nn *Neuron) initial_branch() {
-	nn.excited_neurons = make([]*Branch, 0)
+func (branch *Branch) Increase() {
+	branch.probability += 0.1
+	if branch.probability > 1 {
+		branch.probability = 1
+	}
 }
 
-func (nn *Neuron) add_to_branch(neu *Neuron, idx int) {
-	nn.excited_neurons = append(nn.excited_neurons, &Branch{neu, idx})
+func (branch *Branch) Decrease() {
+	branch.probability -= 0.1
+	if branch.probability < -1 {
+		branch.probability = -1
+	}
 }
+
+type Register_of_previous_touch struct {
+	branch      *Branch
+	probability float64
+	step        int64
+	state       int64
+}
+
+var global_step int64 = 0
 
 type Neuron struct {
-	reversal_tag bool
-	Key          int64
-	// collect each pointers of the predecessors(neurons)
-	pre_neurons []*Neuron
-	// collect each pointers of the successors(neurons)
-	excited_neurons []*Branch // run-time tag, for excited pre_neurons
+	index     int64
+	is_input  bool
+	is_output bool
 
-	state int64
-	Cell  Cell
-	Axon  Axon
-
-	Is_input  bool
-	Is_output bool
+	register Register_of_previous_touch
+	branches []*Branch
 }
 
-func (nn *Neuron) Init() {
-	nn.Cell.Base_p = 0.5
-	nn.Cell.pool = 1
+func (nn *Neuron) Increase() {
+	for i := 0; i < len(nn.branches); i++ {
+		nn.branches[i].Increase()
+	}
 }
 
-func (next *Neuron) branch_init() {
-	next.excited_neurons = make([]*Branch, 0)
+func (nn *Neuron) Decrease() {
+	for i := 0; i < len(nn.branches); i++ {
+		nn.branches[i].Decrease()
+	}
 }
 
-func (nn *Neuron) add_to(next *Neuron, i int) {
-	next.excited_neurons = append(next.excited_neurons, &Branch{next, i})
-}
+func (br *Branch) binarization(p float64) (result_state int64) {
+	// p = br.probability + br.next.register.probability
 
-func (nn *Neuron) merge(trans_p float64) {
-	nn.Cell.float_p = nn.Cell.float_p + trans_p
-	return
-}
+	if p >= 0 {
 
-func (nn *Neuron) try_enough_energy() bool {
-	if nn.Cell.pool < 0.1 {
-		return false
+		if p > 1 {
+			p = 1
+		}
+		if p < rand.Float64() {
+			result_state = Unexcited
+		} else {
+			result_state = Excited
+		}
+
 	} else {
-		return true
-	}
-}
 
-func (nn *Neuron) binarization() bool {
-	// TODO: float p recover(), recover only happened when binarization
-	r := rand.New(rand.NewSource(16))
-	p := r.Float64()
-	if p < nn.Cell.float_p {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (nn *Neuron) change_state() {
-	if nn.state == Quiet {
-		if len(nn.excited_neurons) >= 2 {
-			nn.state = Hebb
-			nn.Cell.last_excit_timestamp = step
+		if p < -1 {
+			p = -1
 		}
-	}
-
-	if nn.state == Hebb {
-		// nn.state = Blocked
-		if nn.Cell.last_excit_timestamp > step+3 {
-			nn.state = Blocked
-			nn.Cell.last_excit_timestamp = step
-		}
-	}
-
-	if nn.state == Blocked {
-		fmt.Println("Blocked")
-		if nn.Cell.last_excit_timestamp > step+10 {
-			nn.state = Quiet
+		if p > -rand.Float64() {
+			result_state = UnInhibited
+		} else {
+			result_state = Inhibited
 		}
 	}
 }
 
-func (nn *Neuron) is_excited() (is_excited bool) {
-	// float_p 的问题还没有解决，合适恢复
-	// fmt.Println("this neuron's state:", nn.state)
-	if nn.state == Hebb {
-		for i := 0; i < len(nn.excited_neurons); i++ {
-			p := nn.excited_neurons[i].neu
-			idx := nn.excited_neurons[i].idx
-			p.Axon.Increase(idx)
+func (br *Branch) impulse(nn *Neuron) {
+	result_state := br.next.register.state
+	if result_state == Excited {
+		br.Increase()
+		br.next.Increase()
+	}
+	if result_state == Unexcited {
+		br.Decrease()
+		if br.probability < 0 {
+			br.next.register.state = UnInhibited
 		}
-		is_excited = true
+		nn.register.branch.Decrease()
 	}
-
-	if nn.state == Quiet {
-		// fmt.Println(nn.Key, " neuron needs binarization")
-		is_excited = nn.binarization()
-	}
-
-	if nn.state == Blocked {
-		fmt.Println("Block")
-		for i := 0; i < len(nn.excited_neurons); i++ {
-			p := nn.excited_neurons[i].neu
-			idx := nn.excited_neurons[i].idx
-			p.Axon.Decrease(idx)
+	if result_state == UnInhibited {
+		br.Increase()
+		if br.probability > 0 {
+			br.next.register.state = Unexcited
 		}
-		is_excited = true
+		nn.register.branch.Decrease()
 	}
-
-	// input 节点的默认兴奋问题
-	if nn.Is_input {
-		is_excited = true
+	if result_state == Inhibited {
+		br.Decrease()
+		br.next.Decrease()
 	}
-	return
 }
 
-func (nn *Neuron) pass_potential(next *Neuron, i int) {
-	// nn.Axon.Increase(i)
-	p := nn.Axon.Trans.p[i]
-	next.merge(p)
+func (br *Branch) register_to_next_neuron(nn *Neuron) {
+	br.next.register.branch = br
+	br.next.register.probability = br.probability
+	br.next.register.step = global_step
+}
+
+func (br *Branch) touch() {
+	delta_step := global_step - br.next.register.step
+	var result_state int64
+	if br.probability >= 0 {
+		if delta_step == 0 {
+			//if br.next.register.state == Excited {
+			// do nothing
+			//}
+			if br.next.register.state == Unexcited {
+				br.next.register.state == Excited
+			}
+			if br.next.register.state == UnInhibited {
+				probability := br.probability + br.next.register.probability
+				br.binarization(probability)
+			}
+			if br.next.register.state == Inhibited {
+				probability := br.probability - 1
+			}
+		}
+		if delta_step > 0 && delta_step <= 3 {
+
+		}
+	}
+	if br.probability < 0 {
+
+	}
+}
+
+func (nn *Neuron) run() {
+	for i := 0; i < len(nn.branches); i++ {
+		nn.branches[i].next
+	}
 }
