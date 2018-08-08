@@ -16,18 +16,14 @@ git clone https://github.com/duminhui/betaHao.git
 ```bash
 $ sudo apt-get install golang
 $ cd betaHao/ && export GOPATH=`pwd`
+$ go get github.com/deckarep/golang-set
+$ go get github.com/eapache/queue
 ```
 
-## Compliling
+## Compliling & Usage
 
 ```bash 
-$ go build
-```
-
-## Usage
-
-```bash
-$ ./betaHao
+$ go run main.go
 ```
 
 ## Contributing
