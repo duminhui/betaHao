@@ -1,17 +1,21 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"math/rand"
+	"neuron"
 	"sync"
 )
 
 func main() {
-	num := 10
-	for j := 0; j < num; j++ {
-		res := getRand(num)
-		fmt.Println(res)
-	}
+	/*
+		num := 10
+		for j := 0; j < num; j++ {
+			res := getRand(num)
+			fmt.Println(res)
+		}`````
+	*/
+	neuron.Test()
 }
 
 func getRand(num int) float64 {

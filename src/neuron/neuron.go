@@ -9,10 +9,10 @@ const (
 )
 
 const (
-	Excited     int64 = 0
-	Unexcited   int64 = 1
-	UnInhibited int64 = 2
-	Inhibited   int64 = 3
+	Excited     int = 0
+	Unexcited   int = 1
+	UnInhibited int = 2
+	Inhibited   int = 3
 )
 
 type Branch struct {
@@ -35,18 +35,18 @@ func (branch *Branch) Decrease() {
 }
 
 type Register_of_previous_touch struct {
-	branch      *Branch
-	probability float64
-	step        int64
-	state       int64
+	branch *Branch
+	// probability float64
+	step  int
+	state int
 }
 
-var global_step int64 = 0
+var global_step int = 0
 
 type Neuron struct {
-	index     int64
-	is_input  bool
-	is_output bool
+	index int
+	//is_input  bool
+	//is_output bool
 
 	register Register_of_previous_touch
 	branches []*Branch
@@ -64,7 +64,7 @@ func (nn *Neuron) Decrease() {
 	}
 }
 
-func (br *Branch) binarization(p float64) (result_state int64) {
+func (br *Branch) binarization(p float64) {
 	// p = br.probability + br.next.register.probability
 
 	if p >= 0 {
@@ -73,9 +73,9 @@ func (br *Branch) binarization(p float64) (result_state int64) {
 			p = 1
 		}
 		if p < rand.Float64() {
-			result_state = Unexcited
+			br.next.register.state = Unexcited
 		} else {
-			result_state = Excited
+			br.next.register.state = Excited
 		}
 
 	} else {
@@ -84,9 +84,9 @@ func (br *Branch) binarization(p float64) (result_state int64) {
 			p = -1
 		}
 		if p > -rand.Float64() {
-			result_state = UnInhibited
+			br.next.register.state = UnInhibited
 		} else {
-			result_state = Inhibited
+			br.next.register.state = Inhibited
 		}
 	}
 }
@@ -117,42 +117,98 @@ func (br *Branch) impulse(nn *Neuron) {
 	}
 }
 
-func (br *Branch) register_to_next_neuron(nn *Neuron) {
+func (br *Branch) register_to_next_neuron(nn *Neuron) { //, state int64) {
 	br.next.register.branch = br
-	br.next.register.probability = br.probability
+	// br.next.register.probability = br.probability
 	br.next.register.step = global_step
+	// br.next.register.state = state
 }
 
-func (br *Branch) touch() {
+func (br *Branch) touch() (result bool) {
 	delta_step := global_step - br.next.register.step
-	var result_state int64
+
+	var probability float64
+
 	if br.probability >= 0 {
+
 		if delta_step == 0 {
-			//if br.next.register.state == Excited {
-			// do nothing
-			//}
+			if br.next.register.state == Excited {
+				probability = 1
+			}
 			if br.next.register.state == Unexcited {
-				br.next.register.state == Excited
+				probability = 1
 			}
 			if br.next.register.state == UnInhibited {
-				probability := br.probability + br.next.register.probability
-				br.binarization(probability)
+				probability = br.probability + br.next.register.branch.probability
 			}
 			if br.next.register.state == Inhibited {
-				probability := br.probability - 1
+				probability = br.probability - 1
 			}
+
+			br.binarization(probability)
+			br.impulse(br.next)
+			br.register_to_next_neuron(br.next)
+		} else if delta_step > 0 && delta_step <= 3 {
+			if br.next.register.state == Excited {
+				br.Decrease()
+			}
+			if br.next.register.state == Unexcited || br.next.register.state == UnInhibited || br.next.register.state == Inhibited {
+				probability = br.probability + br.next.register.branch.probability
+				br.binarization(probability)
+				br.impulse(br.next)
+				br.register_to_next_neuron(br.next)
+			}
+		} else {
+			probability = br.probability
+			br.binarization(probability)
+			br.impulse(br.next)
+			br.register_to_next_neuron(br.next)
 		}
-		if delta_step > 0 && delta_step <= 3 {
 
+	} else if br.probability < 0 {
+
+		if delta_step == 0 {
+			if br.next.register.state == Excited {
+				probability = br.probability + 1
+			}
+			if br.next.register.state == Unexcited {
+				probability = br.probability + br.next.register.branch.probability
+			}
+			if br.next.register.state == UnInhibited {
+				probability = -1
+			}
+			if br.next.register.state == Inhibited {
+				probability = -1
+			}
+
+			br.binarization(probability)
+			br.impulse(br.next)
+			br.register_to_next_neuron(br.next)
+
+		} else if delta_step > 0 && delta_step <= 3 {
+			if br.next.register.state == Excited || br.next.register.state == Unexcited || br.next.register.state == UnInhibited {
+				probability = br.probability + br.next.register.branch.probability
+				br.binarization(probability)
+				br.impulse(br.next)
+				br.register_to_next_neuron(br.next)
+			}
+			if br.next.register.state == Inhibited {
+				br.Increase()
+			}
+		} else {
+			probability = br.probability
+			br.binarization(probability)
+			br.impulse(br.next)
+			br.register_to_next_neuron(br.next)
 		}
-	}
-	if br.probability < 0 {
 
 	}
-}
 
-func (nn *Neuron) run() {
-	for i := 0; i < len(nn.branches); i++ {
-		nn.branches[i].next
+	if br.next.register.state == Excited {
+		result = true
+	} else {
+		result = false
 	}
+
+	return result
 }
