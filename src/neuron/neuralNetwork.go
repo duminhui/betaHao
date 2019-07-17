@@ -1,9 +1,11 @@
 package neuron
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
-	// "os"
 	"math/rand"
+	"os"
 
 	"github.com/eapache/queue"
 )
@@ -11,8 +13,8 @@ import (
 const BRANCH_OF_EACH_NEURON int = 3
 
 type NeuralNetwork struct {
-	inputs  map[*Neuron]int
-	outputs map[*Neuron]int
+	inputs  []*Neuron
+	outputs []*Neuron
 
 	Neurons []*Neuron
 }
@@ -49,55 +51,110 @@ func (nk *NeuralNetwork) Generate_random_graph(n int) {
 }
 
 func (nk *NeuralNetwork) Generate_inputs(num int) {
-	nk.inputs = map[*Neuron]int{}
 
 	for len(nk.inputs) < num {
 		i := rand.Intn(len(nk.Neurons))
-		nk.inputs[nk.Neurons[i]] = i
+		tmp_neuron := nk.Neurons[i]
+
+		check_value := 0
+		for j := 0; j < len(nk.inputs); j++ {
+			if nk.inputs[j] == tmp_neuron {
+				check_value = 1
+			}
+		}
+
+		if check_value == 0 {
+			nk.inputs = append(nk.inputs, tmp_neuron)
+		}
+
 	}
 }
 
 func (nk *NeuralNetwork) Generate_outputs(num int) {
-	nk.outputs = map[*Neuron]int{}
 
-	for len(nk.outputs) < num {
+	for len(nk.inputs) < num {
 		i := rand.Intn(len(nk.Neurons))
-		nk.inputs[nk.Neurons[i]] = i
+		tmp_neuron := nk.Neurons[i]
+
+		check_value := 0
+		for j := 0; j < len(nk.inputs); j++ {
+			if nk.outputs[j] == tmp_neuron {
+				check_value = 1
+			}
+		}
+
+		if check_value == 0 {
+			nk.outputs = append(nk.outputs, tmp_neuron)
+		}
+
 	}
 }
 
 func (nk *NeuralNetwork) Read_outputs(learn_mode bool, expected_out []bool) (result []bool) {
 	result = make([]bool, len(expected_out))
-	if learn_mode == true {
-		for np, idx := range nk.outputs {
-			if np.register.state == Excited && expected_out[idx] == false {
-				result[idx] = false
-				np.register.branch.Decrease()
+
+	if learn_mode == true { // 根据期望输出与实际输出作对比，完成输出神经元的学习
+
+		for i := 0; i < len(nk.outputs); i++ {
+			if nk.outputs[i].register.state == Excited && expected_out[i] == false {
+				result[i] = false
+				nk.outputs[i].register.branch.Decrease()
 			} else {
-				if np.register.state == Excited {
-					result[idx] = true
+				if nk.outputs[i].register.state == Excited {
+					result[i] = true
 				} else {
-					result[idx] = false
+					result[i] = false
 				}
 			}
 		}
+
 	} else {
-		for np, idx := range nk.outputs {
-			if np.register.state == Excited {
-				result[idx] = true
+
+		for i := 0; i < len(nk.outputs); i++ {
+			if nk.outputs[i].register.state == Excited {
+				result[i] = true
 			} else {
-				result[idx] = false
+				result[i] = false
 			}
 		}
+
 	}
 	return
 }
 
-func (nk *NeuralNetwork) Write_inputs() {
+func (nk *NeuralNetwork) Write_inputs(RGB []byte, running_queue *queue.Queue) {
+	var idx int64 = 0
+	var offset int
+	var bit int
+	bin_buf := bytes.NewBuffer(RGB)
+	for i := 0; i < len(RGB); i++ {
+		offset = 1
+		for j := 0; j < 8; j++ {
+			var x int
+			binary.Read(bin_buf, binary.BigEndian, &x)
+			bit = x & offset
+			if bit == 1 {
+				running_queue.Add(nk.inputs[idx])
+			}
+			offset <<= 1
+			idx++
+		}
+	}
+}
 
+func Get_cifar_data(ff *os.File) (expected_out []byte, vision_data []byte) {
+
+	expected_out = make([]byte, 1)
+	ff.Read(expected_out)
+	// fmt.Printf("%d bytes: %d\n", n1, b1)
+	vision_data = make([]byte, 3072)
+	ff.Read(vision_data)
+	return expected_out, vision_data
 }
 
 func (nk *NeuralNetwork) Boot_up(step int) {
+	ff, _ := os.Open("./cifar-10-batches-bin/data_batch_3.bin")
+
 	running_queue := queue.New()
 	var neuron_deduplicator map[*Neuron]struct{}
 
@@ -105,7 +162,8 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	running_queue.Add(null_neuron)
 
 	var nn *Neuron
-
+	var expected_out []byte
+	var vision_data []byte
 	for i := 0; i < step; i++ {
 		nn = running_queue.Peek().(*Neuron)
 		running_queue.Remove()
@@ -113,8 +171,11 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		if nn == null_neuron {
 
 			neuron_deduplicator = make(map[*Neuron]struct{})
+
+			expected_out, vision_data = Get_cifar_data(ff)
+
 			action := nk.Read_outputs(false, expected_out)
-			nk.Write_inputs()
+			nk.Write_inputs(vision_data, running_queue)
 
 			running_queue.Add(nn)
 			global_step = global_step + 1
@@ -125,7 +186,7 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 				result := nn.branches[i].touch()
 				if result {
 					if _, ok := neuron_deduplicator[nn]; !ok {
-						running_queue.Add(nn)
+						running_queue.Add(nn) //?
 					}
 				}
 
@@ -134,11 +195,6 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 		}
 	}
 
-}
-
-func Test1() {
-	np := &Neuron{}
-	fmt.Println(np)
 }
 
 func Test() {
