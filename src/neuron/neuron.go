@@ -5,10 +5,6 @@ import (
 )
 
 const (
-	MAX_BRANCHES = 3
-)
-
-const (
 	Excited     int = 0
 	Unexcited   int = 1
 	UnInhibited int = 2
@@ -49,7 +45,7 @@ type Neuron struct {
 	//is_output bool
 
 	register Register_of_previous_touch
-	branches []*Branch
+	branches [BRANCH_OF_EACH_NEURON]Branch
 }
 
 func (nn *Neuron) Increase() {
