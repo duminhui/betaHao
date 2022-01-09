@@ -11,36 +11,39 @@ import (
 )
 
 const BRANCH_OF_EACH_NEURON int = 3
+const NUMBER_OF_NEURONS int = 10
+const NUMBER_OF_INPUTS int = 3
+const NUMBER_OF_OUTPUTS int = 2
 
 type NeuralNetwork struct {
 	inputs  []*Neuron
 	outputs []*Neuron
 
-	Neurons []*Neuron
+	Neurons [NUMBER_OF_NEURONS]*Neuron
 }
 
-func (nk *NeuralNetwork) Generate_nodes(num int) {
-	for i := 0; i < num; i++ {
+func (nk *NeuralNetwork) Generate_nodes() {
+	for i := 0; i < NUMBER_OF_NEURONS; i++ {
 		p := &Neuron{}
 		p.index = i
-		nk.Neurons = append(nk.Neurons, p)
+
+		nk.Neurons[i] = p
+		// fmt.Println(nk.Neurons[i])
 	}
 }
 
-func (nk *NeuralNetwork) Add_edge(br *Branch, nn *Neuron) {
-	br.next = nn
-}
+func (nk *NeuralNetwork) Generate_random_graph() {
 
-func (nk *NeuralNetwork) Generate_random_graph(n int) {
-
-	for i := 0; i < len(nk.Neurons); i++ {
+	for i := 0; i < NUMBER_OF_NEURONS; i++ {
 		for j := 0; j < BRANCH_OF_EACH_NEURON; j++ {
 
 			for {
-				next_i := rand.Intn(len(nk.Neurons))
+				next_i := rand.Intn(NUMBER_OF_NEURONS)
 				if next_i != i {
-					nk.Add_edge(nk.Neurons[i].branches[j], nk.Neurons[next_i])
-					fmt.Println(nk.Neurons[i])
+					// fmt.Println(&nk.Neurons[next_i])
+					// 添加一条边
+					nk.Neurons[i].branches[j].next = nk.Neurons[next_i]
+					// fmt.Println(nk.Neurons[i])
 					break
 				}
 			}
@@ -50,44 +53,12 @@ func (nk *NeuralNetwork) Generate_random_graph(n int) {
 
 }
 
-func (nk *NeuralNetwork) Generate_inputs(num int) {
-
-	for len(nk.inputs) < num {
-		i := rand.Intn(len(nk.Neurons))
-		tmp_neuron := nk.Neurons[i]
-
-		check_value := 0
-		for j := 0; j < len(nk.inputs); j++ {
-			if nk.inputs[j] == tmp_neuron {
-				check_value = 1
-			}
-		}
-
-		if check_value == 0 {
-			nk.inputs = append(nk.inputs, tmp_neuron)
-		}
-
-	}
+func (nk *NeuralNetwork) Generate_inputs() {
+	nk.inputs = nk.Neurons[0:NUMBER_OF_INPUTS]
 }
 
-func (nk *NeuralNetwork) Generate_outputs(num int) {
-
-	for len(nk.inputs) < num {
-		i := rand.Intn(len(nk.Neurons))
-		tmp_neuron := nk.Neurons[i]
-
-		check_value := 0
-		for j := 0; j < len(nk.inputs); j++ {
-			if nk.outputs[j] == tmp_neuron {
-				check_value = 1
-			}
-		}
-
-		if check_value == 0 {
-			nk.outputs = append(nk.outputs, tmp_neuron)
-		}
-
-	}
+func (nk *NeuralNetwork) Generate_outputs() {
+	nk.outputs = nk.Neurons[NUMBER_OF_NEURONS-NUMBER_OF_OUTPUTS : NUMBER_OF_NEURONS]
 }
 
 func (nk *NeuralNetwork) Read_outputs(learn_mode bool, expected_out []bool) (result []bool) {
@@ -152,8 +123,37 @@ func Get_cifar_data(ff *os.File) (expected_out []byte, vision_data []byte) {
 	return expected_out, vision_data
 }
 
+func Conversion_from_byte_array_to_bool_array(byte_array []byte) (bool_array []bool) {
+	bool_array = make([]bool, len(byte_array)*8)
+
+	var idx int64 = 0
+	var offset int
+	var bit int
+
+	// fmt.Println(len(byte_array))
+	// fmt.Println(byte_array[0])
+	for i := 0; i < len(byte_array); i++ {
+		offset = 1
+		for j := 0; j < 8; j++ {
+			var x int
+			x = int(byte_array[i])
+
+			bit = x & offset //101&100=100;010&100=0
+			// fmt.Println(x, offset, bit)
+			if bit > 0 {
+				bool_array[idx] = true
+			} else if bit == 0 {
+				bool_array[idx] = false
+			}
+
+			offset <<= 1
+			idx++
+		}
+	}
+	return bool_array
+}
 func (nk *NeuralNetwork) Boot_up(step int) {
-	ff, _ := os.Open("./cifar-10-batches-bin/data_batch_3.bin")
+	// ff, _ := os.Open("./cifar-10-batches-bin/data_batch_3.bin")
 
 	running_queue := queue.New()
 	var neuron_deduplicator map[*Neuron]struct{}
@@ -162,7 +162,7 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 	running_queue.Add(null_neuron)
 
 	var nn *Neuron
-	var expected_out []byte
+	// var expected_out []byte
 	var vision_data []byte
 	for i := 0; i < step; i++ {
 		nn = running_queue.Peek().(*Neuron)
@@ -172,9 +172,10 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 
 			neuron_deduplicator = make(map[*Neuron]struct{})
 
-			expected_out, vision_data = Get_cifar_data(ff)
+			// expected_out, vision_data = Get_cifar_data(ff)
 
-			action := nk.Read_outputs(false, expected_out)
+			// 暂时去掉，为了测试bool数组的读取情况
+			// action := nk.Read_outputs(false, expected_out)
 			nk.Write_inputs(vision_data, running_queue)
 
 			running_queue.Add(nn)
@@ -194,46 +195,38 @@ func (nk *NeuralNetwork) Boot_up(step int) {
 
 		}
 	}
-
+	// ff.Close()
 }
 
 func Test() {
-	var sets map[*Neuron]int
-	sets = make(map[*Neuron]int)
-	cell1 := &Neuron{index: 1}
-	sets[cell1] = 1
 
-	cell1.index = 2
+	// 新建一个神经网络NeuralNetwork，包含inputs、outputs、Neurons的指针组成的数组
+	// inputs、outputs、Neuron三者的数据类型皆为：[]*Neuron
+	// 由于Neuron结构体内存在索引（index int）变量，生成Neuron节点时需给每一个Neuron的index赋值
+	// inputs和outputs可以通过自带的函数直接生成，而不需要重新初始化和命名新的空间
 
-	sets[cell1] = 2
+	// 初始化NeuralNetwork之后，需要用指针表示Neuron之间的关系
+	var nk NeuralNetwork
+	nk.Generate_nodes()
+	nk.Generate_inputs()
+	nk.Generate_outputs()
+	// fmt.Println(nk.Neurons[0].branches[0].next)
+	// nk.Neurons[0].branches[0].next = nk.Neurons[1]
+	nk.Generate_random_graph()
+	fmt.Println(nk.Neurons[0], nk.Neurons[1])
+	// fmt.Println(nk)
+	ff, _ := os.Open("./cifar-10-batches-bin/data_batch_3.bin")
+	expected_out, vision_data := Get_cifar_data(ff)
+	// fmt.Println(expected_out)
+	// fmt.Println(vision_data)
+	eo := Conversion_from_byte_array_to_bool_array(expected_out)
+	vd := Conversion_from_byte_array_to_bool_array(vision_data)
+	fmt.Println(eo)
+	fmt.Println(vd)
 
-	cell3 := &Neuron{index: 3}
-	sets[cell3] = 3
-
-	fmt.Println(cell1.index, sets[cell1])
-
-	// delete(sets, cell1)
-	for k, v := range sets {
-		println(k, v)
-	}
-
-	delete(sets, cell3)
-
-	for k, v := range sets {
-		println(k, v)
-	}
-
-	q := queue.New()
-	q.Add(cell1)
-	q.Add(cell3)
-
-	var t *Neuron
-	t = q.Peek().(*Neuron)
-	fmt.Println(*t)
-	q.Remove()
-	t = q.Peek().(*Neuron)
-	fmt.Println(*t)
-	q.Remove()
-
-	fmt.Println(q.Length())
+	expected_out, vision_data = Get_cifar_data(ff)
+	eo = Conversion_from_byte_array_to_bool_array(expected_out)
+	vd = Conversion_from_byte_array_to_bool_array(vision_data)
+	fmt.Println(eo)
+	fmt.Println(vd)
 }
