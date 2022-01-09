@@ -1,12 +1,14 @@
 package main
 
 import (
-	// "fmt"
-	"math/rand"
+	"fmt"
+	// "math/rand"
 	"neuron"
-	"sync"
+	// "sync"
 )
 
 func main() {
+	fmt.Println("begin!")
 	neuron.Test()
+	fmt.Println("run success!")
 }
